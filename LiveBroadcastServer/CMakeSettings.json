@@ -10,7 +10,7 @@
             "buildCommandArgs": "",
             "ctestCommandArgs": "",
             "inheritEnvironments": [ "linux_x64" ],
-            "remoteMachineName": "2071642134;192.168.80.160 (username=root, port=22, authentication=Password)",
+            "remoteMachineName": "-482021962;fish.lsmg.xyz (username=root, port=22, authentication=Password)",
             "remoteCMakeListsRoot": "$HOME/.vs/${projectDirName}/${workspaceHash}/src",
             "remoteBuildRoot": "$HOME/.vs/${projectDirName}/${workspaceHash}/out/build/${name}",
             "remoteInstallRoot": "$HOME/.vs/${projectDirName}/${workspaceHash}/out/install/${name}",
