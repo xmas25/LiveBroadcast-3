@@ -23,4 +23,4 @@ set(NETWORK_HEADERS
 	"Callback.h"
 )
 
-add_library(net ${NETWORK_SRCS} ${NETWORK_HEADERS})
+add_library(network ${NETWORK_SRCS} ${NETWORK_HEADERS})

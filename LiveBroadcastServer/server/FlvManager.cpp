@@ -10,7 +10,7 @@ FlvManager::FlvManager(const std::string& file) :
 	codec_(),
 	file_(file),
 	flv_header_(),
-	flv_sps_pps_(),
+	video_audio_tags({}),
 	current_tag_(nullptr),
 	file_tags_(),
 	buffer_(BUFFER_SIZE)
@@ -56,10 +56,10 @@ ssize_t FlvManager::ParseFile(size_t parse_length)
 	}
 	parsed_length_ += parsed;
 
-	parsed = ParseSpsPps();
+	parsed = ParseVideoAudio();
 	if (parsed < 0)
 	{
-		printf("parse sps pps error");
+		printf("parse video audio error");
 		return -1;
 	}
 	parsed_length_ += parsed;
@@ -135,35 +135,43 @@ ssize_t FlvManager::ParseHeader()
 	return parse_result;
 }
 
-ssize_t FlvManager::ParseSpsPps()
+ssize_t FlvManager::ParseVideoAudio()
 {
-	ssize_t parse_result = codec_.DecodeTagHander(buffer_.ReadBegin(), buffer_.ReadableLength(), &flv_sps_pps_);
-	if (parse_result > 0)
-	{
-		buffer_.AddReadIndex(parse_result);
-	}
-	else if (parse_result < 0)
-	{
-		return -1;
-	}
-	else
-	{
-		return 0;
-	}
+	size_t sum_parsed = 0;
 
-	uint32_t data_size = flv_sps_pps_.GetDataSize();
-	if (buffer_.ReadableLength() >= data_size)
+	for (int i = 0; i <= 1; ++i)
 	{
-		flv_sps_pps_.SetData(buffer_.ReadBegin(), data_size);
-		buffer_.AddReadIndex(data_size);
-		parse_result += data_size;
-	}
-	else
-	{
-		return -1;
-	}
+		ssize_t parse_result = codec_.DecodeTagHander(buffer_.ReadBegin(), buffer_.ReadableLength(), &video_audio_tags[i]);
+		if (parse_result > 0)
+		{
+			buffer_.AddReadIndex(parse_result);
+		}
+		else if (parse_result < 0)
+		{
+			return -1;
+		}
+		else
+		{
+			return 0;
+		}
 
-	return parse_result;
+		uint32_t data_size = video_audio_tags[i].GetDataSize();
+		if (buffer_.ReadableLength() >= data_size)
+		{
+			video_audio_tags[i].SetData(buffer_.ReadBegin(), data_size);
+			buffer_.AddReadIndex(data_size);
+			parse_result += data_size;
+
+			sum_parsed += parse_result;
+		}
+		else
+		{
+			return -1;
+		}
+	}
+	
+
+	return sum_parsed;
 }
 
 ssize_t FlvManager::ParseTagHeader()

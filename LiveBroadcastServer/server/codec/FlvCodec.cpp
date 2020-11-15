@@ -110,7 +110,7 @@ ssize_t FlvTag::DecodeTagHander(const char* data, size_t length)
 
 size_t FlvTag::EncodeTag(const char* buffer, size_t length)
 {
-    if (length)
+    return 0;
 }
 
 void FlvTag::Init()

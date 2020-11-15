@@ -39,7 +39,7 @@ private:
 	File file_;
 
 	FlvHeader flv_header_;
-	FlvTag flv_sps_pps_;
+	FlvTag video_audio_tags[2];
 	FlvTag* current_tag_;
 	FlvTag* last_tag_;
 	std::vector<FlvTag*> file_tags_;
@@ -52,7 +52,7 @@ private:
 	size_t ReadDataFromFile();
 
 	ssize_t ParseHeader();
-	ssize_t ParseSpsPps();
+	ssize_t ParseVideoAudio();
 	ssize_t ParseTagHeader();
 	ssize_t ParseTagData();
 

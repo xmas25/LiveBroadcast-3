@@ -10,7 +10,7 @@ File::File() :
 }
 
 File::File(const std::string& file):
-	File(file, File::RDONLY)
+	File(file, File::O_RDONLY)
 {
 }
 
@@ -59,6 +59,19 @@ ssize_t File::Read(char* buffer, size_t length)
 	return result;
 }
 
+ssize_t File::Write(char* buffer, size_t length)
+{
+	if (!file_)
+	{
+		return -1;
+	}
+
+	ssize_t result = fwrite(buffer, 1, length, file_);
+	assert(result >= 0);
+
+	return result;
+}
+
 size_t File::GetFileSize()
 {
 	if (stat_.st_size == 0)
@@ -74,16 +87,16 @@ std::string File::OpenModeToString(OpenMode openmode)
 	std::string mode;
 	switch (openmode)
 	{
-	case File::RDONLY:
+	case File::O_RDONLY:
 		mode = "r";
 		break;
-	case File::WRONLY:
+	case File::O_WRONLY:
 		mode = "w";
 		break;
-	case File::APPEND:
+	case File::O_APPEND:
 		mode = "a";
 		break;
-	case File::RDWR:
+	case File::O_RDWR:
 		mode = "r+";
 		break;
 	default:

@@ -11,10 +11,10 @@ public:
 
 	enum OpenMode
 	{
-		RDONLY,
-		WRONLY,
-		APPEND,
-		RDWR,
+		O_RDONLY,
+		O_WRONLY,
+		O_APPEND,
+		O_RDWR,
 	};
 
 	File();
@@ -23,11 +23,13 @@ public:
 
 	~File();
 
-	bool Open(const std::string& file, OpenMode openmode = RDONLY);
+	bool Open(const std::string& file, OpenMode openmode = O_RDONLY);
 
 	void Close();
 
 	ssize_t Read(char* buffer, size_t length);
+
+	ssize_t Write(char* buffer, size_t length);
 
 	size_t GetFileSize();
 
