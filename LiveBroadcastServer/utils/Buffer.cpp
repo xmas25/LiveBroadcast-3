@@ -10,7 +10,9 @@ Buffer::Buffer() :
 Buffer::Buffer(size_t buffer_size) :
 	buffer_(buffer_size + IDX_BEGIN),
 	read_idx_(IDX_BEGIN),
-	write_idx_(IDX_BEGIN)
+	write_idx_(IDX_BEGIN),
+	sum_read_(0),
+	sum_write_(0)
 {
 }
 
@@ -30,11 +32,13 @@ size_t Buffer::WritableLength() const
 
 void Buffer::AddWriteIndex(size_t index)
 {
+	sum_write_ += index;
 	write_idx_ += index;
 }
 
 void Buffer::AddReadIndex(size_t index)
 {
+	sum_read_ += index;
 	read_idx_ += index;
 }
 
@@ -59,6 +63,7 @@ void Buffer::AdjustBuffer()
 	size_t readable_length = ReadableLength();
 	if (readable_length == 0)
 	{
+		Reset();
 		return;
 	}
 
@@ -71,4 +76,14 @@ void Buffer::Reset()
 {
 	read_idx_ = IDX_BEGIN;
 	write_idx_ = IDX_BEGIN;
+}
+
+size_t Buffer::GetSumRead() const
+{
+	return sum_read_;
+}
+
+size_t Buffer::GetSumWrite() const
+{
+	return sum_write_;
 }

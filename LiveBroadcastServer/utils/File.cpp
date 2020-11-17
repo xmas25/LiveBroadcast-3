@@ -1,6 +1,8 @@
+#include "File.h"
 #include <cassert>
 
 #include "utils/File.h"
+#include "utils/Buffer.h"
 
 File::File() :
 	path_(),
@@ -55,6 +57,20 @@ ssize_t File::Read(char* buffer, size_t length)
 	ssize_t result = fread(buffer, 1, length, file_);
 
 	assert(result >= 0);
+
+	return result;
+}
+
+ssize_t File::Read(Buffer* buffer)
+{
+	if (!buffer)
+	{
+		return -1;
+	}
+
+	buffer->AdjustBuffer();
+	ssize_t result = Read(buffer->WriteBegin(), buffer->WritableLength());
+	buffer->AddWriteIndex(result);
 
 	return result;
 }

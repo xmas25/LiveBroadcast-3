@@ -1,10 +1,15 @@
 #ifndef UTILS_CODEC_RTMPCODEC_H
+#define UTILS_CODEC_RTMPCODEC_H
 
 #include <cstdint>
 #include <cstring>
 #include <string>
 
+/* 初期仅需要音视频数据 这里进行过滤*/
 constexpr int MOVIE_CSID = 4;
+
+/* 一下所有数据 用于握手部分和商定部分 采用的bilibili的握手商定抓包*/
+
 
 constexpr uint8_t RTMP_S01[1537] = { 0x03 };
 
@@ -43,36 +48,62 @@ constexpr uint8_t RTMP_6[] = { 0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x69, 0x14, 0
 	0x63, 0x72, 0x69, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x02, 0x00, 0x10, 0x53, 0x74, 0x61, 0x72, 0x74, 0x20, 0x70, 0x75, 0x62, 0x6c, 0x69, 0x73,
 	0x68, 0x69, 0x6e, 0x67, 0x00, 0x00, 0x09 };
 
-enum RtmpPackFmt : uint8_t
-{
-	FMT0,
-	FMT1,
-	FMT2,
-	FMT3
-};
-
-enum RtmpPackCode : uint8_t
-{
-	AUDIO = 8,
-	VIDEO = 9
-
-};
-
+class FlvTag;
 class RtmpPack
 {
 public:
+	enum RtmpPackFmt : uint8_t
+	{
+		FMT0 = 0,
+		FMT1 = 1,
+		FMT2 = 2,
+		FMT3 = 3
+	};
+
+	enum RtmpPackType : uint8_t
+	{
+		RTMP_AUDIO = 8,
+		RTMP_VIDEO = 9,
+		RTMP_SCRIPT = 18,
+		RTMP_OTHER = 0,
+	};
+
 	RtmpPack() = default;
 	~RtmpPack() = default;
+
+	ssize_t DecodeHeader(const char* data, size_t length);
+
+	bool EncodeHeaderToFlvTag(FlvTag* flv_tag);
+
+	RtmpPackType GetRtmpPackType() const;
+
+	uint32_t GetDataSize() const;
+
+	RtmpPackFmt GetFmt() const;
+
+	uint8_t GetCsid() const;
 
 private:
 
 	RtmpPackFmt fmt_;
+	uint8_t csid_;
 	uint8_t timestamp_[3];
-	uint8_t msg_length_[3];
-	RtmpPackCode code_;
+	uint8_t data_size_[3];
+	RtmpPackType pack_type_;
 	uint32_t stream_id_;
 
-	std::string data_;
+	const static uint8_t RTMPPACK_FMT_MAX = 3;
+
+	const static uint8_t FMT0_HEADER_LENGTH = 11;
+	const static uint8_t FMT1_HEADER_LENGTH = 7;
+	const static uint8_t FMT2_HEADER_LENGTH = 3;
+	const static uint8_t FMT3_HEADER_LENGTH = 0;
+
+	ssize_t DecodeFmt0(const char* data, size_t length);
+	ssize_t DecodeFmt1(const char* data, size_t length);
+	ssize_t DecodeFmt2(const char* data, size_t length);
+
+	void SetPackType(uint8_t type);
 };
 
 class RtmpCodec
@@ -82,7 +113,7 @@ public:
 	RtmpCodec() = default;
 	~RtmpCodec() = default;
 
-	int Decode(const char* data, size_t length);
+	ssize_t DecodeHeader(const char* data, size_t length, RtmpPack* rtmp_pack_);
 
 private:
 

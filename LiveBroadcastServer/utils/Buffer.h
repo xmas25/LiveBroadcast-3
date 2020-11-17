@@ -6,6 +6,9 @@
 constexpr int DEFAULT_BUFFER_SIZE = 4096;
 constexpr int IDX_BEGIN = 8;
 
+/**
+ * 通用缓冲区类
+*/
 class Buffer
 {
 public:
@@ -29,11 +32,15 @@ public:
 
 	void Reset();
 
+	size_t GetSumRead() const;
+	size_t GetSumWrite() const;
 private:
 
 	std::vector<char> buffer_;
 	size_t read_idx_;
 	size_t write_idx_;
+	size_t sum_read_;
+	size_t sum_write_;
 };
 
 

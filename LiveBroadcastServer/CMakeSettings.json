@@ -19,7 +19,13 @@
             "remoteCopyBuildOutput": false,
             "remoteCopySourcesMethod": "rsync",
             "addressSanitizerRuntimeFlags": "detect_leaks=0",
-            "variables": [],
+            "variables": [
+                {
+                    "name": "CMAKE_MAKE_PROGRAM",
+                    "value": "/usr/bin/gmake",
+                    "type": "FILEPATH"
+                }
+            ],
             "intelliSenseMode": "linux-gcc-x64"
         }
     ]

@@ -5,6 +5,10 @@
 #include <cstdio>
 #include <sys/stat.h>
 
+/**
+ * 用于打开指定的文件 进行读写 事后进行文件关闭操作
+*/
+class Buffer;
 class File
 {
 public:
@@ -28,6 +32,8 @@ public:
 	void Close();
 
 	ssize_t Read(char* buffer, size_t length);
+
+	ssize_t Read(Buffer* buffer);
 
 	ssize_t Write(char* buffer, size_t length);
 

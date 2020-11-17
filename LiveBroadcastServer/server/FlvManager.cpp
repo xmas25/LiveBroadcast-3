@@ -12,46 +12,48 @@ FlvManager::FlvManager(const std::string& file) :
 	flv_header_(),
 	video_audio_tags({}),
 	current_tag_(nullptr),
-	file_tags_(),
+	last_tag_(nullptr),
+	flv_tags_(),
+	parse_status_(FlvManager::TAG_HEADER),
+	parsed_length_(0),
 	buffer_(BUFFER_SIZE)
 {
-	Init();
+	
 }
 
 FlvManager::~FlvManager()
 {
 }
 
-void FlvManager::Init()
-{
-	parse_status_ = FlvManager::TAG_HEADER;
-
-	parsed_length_ = 0;
-}
-
 bool FlvManager::SetFilePath(const std::string& file)
 {
 	bool result = file_.Open(file);
 
-	if (result)
-	{
-		Init();
-	}
-	
 	return result;
 }
 
 ssize_t FlvManager::ParseFile(size_t parse_length)
 {
+	/* 可以设置指定的解析长度 但最大为文件长度 -4 Flv最后四个字节用于校验*/
 	parse_length = file_.GetFileSize() > parse_length ? parse_length :
 		file_.GetFileSize() - 4;
 
 
 	ReadDataFromFile();
+
+	/* 首先从数据流解析出 Header Script和音视频Tag*/
 	ssize_t parsed = ParseHeader();
 	if (parsed < 0)
 	{
 		printf("parse header error");
+		return -1;
+	}
+	parsed_length_ += parsed;
+
+	parsed = ParseScripTag();
+	if (parsed < 0)
+	{
+		printf("parse script error");
 		return -1;
 	}
 	parsed_length_ += parsed;
@@ -64,12 +66,15 @@ ssize_t FlvManager::ParseFile(size_t parse_length)
 	}
 	parsed_length_ += parsed;
 
+	current_tag_ = new FlvTag;
+
+	/* 开始解析存储声音和视频的Tag*/
 	bool parsing = true;
 	while (parsing && parsed_length_ < parse_length)
 	{
 		if (parse_status_ == FlvManager::TAG_HEADER)
 		{
-			parsed = ParseTagHeader();
+			parsed = ParseTagHeader(current_tag_);
 			if (parsed < 0)
 			{
 				printf("parse tag header error");
@@ -81,6 +86,8 @@ ssize_t FlvManager::ParseFile(size_t parse_length)
 				ReadDataFromFile();
 				continue;
 			}
+
+			/* 成功解析一个TagHeader部分后 进行校验*/
 			if (!CheckTag())
 			{
 				parsing = false;
@@ -89,7 +96,7 @@ ssize_t FlvManager::ParseFile(size_t parse_length)
 		}
 		if (parse_status_ == FlvManager::TAG_DATA)
 		{
-			parsed = ParseTagData();
+			parsed = ParseTagData(current_tag_);
 			if (parsed < 0)
 			{
 				printf("parse tag data error");
@@ -100,7 +107,11 @@ ssize_t FlvManager::ParseFile(size_t parse_length)
 				ReadDataFromFile();
 				continue;
 			}
-			parsed += FLV_TAG_HEADER_LENGTH;
+			last_tag_ = current_tag_;
+			flv_tags_.push_back(current_tag_);
+			current_tag_ = new FlvTag;
+
+			parsed += FlvTag::FLV_TAG_HEADER_LENGTH;
 
 			parsed_length_ += parsed;
 			printf("parse: %zo, sum parsed: %zu\n", parsed, parsed_length_);
@@ -109,6 +120,34 @@ ssize_t FlvManager::ParseFile(size_t parse_length)
 
 	return parsed_length_;
 }
+
+FlvTag* FlvManager::GetScriptTag()
+{
+	return &script_tag_;
+}
+
+FlvTag* FlvManager::GetVideoAudioTags()
+{
+	return &video_audio_tags[0];
+}
+
+void FlvManager::PushBackFlvTagAndSetPreviousSize(FlvTag* flv_tag)
+{
+	if (!last_tag_)
+	{
+		flv_tag->SetPreviousTagSize(0);
+	}
+	else 
+	{	
+		flv_tag->SetPreviousTagSize(last_tag_->GetTagSize()
+		);
+	}
+	flv_tags_.push_back(flv_tag);
+
+	last_tag_ = flv_tag;
+	
+}
+
 
 size_t FlvManager::ReadDataFromFile()
 {
@@ -135,56 +174,63 @@ ssize_t FlvManager::ParseHeader()
 	return parse_result;
 }
 
+ssize_t FlvManager::ParseScripTag()
+{
+	size_t sum_parsed = 0;
+
+	ssize_t parsed = ParseTagHeader(&script_tag_);
+	if (parsed <= 0)
+	{
+		return -1;
+	}
+	sum_parsed += parsed;
+
+	parsed = ParseTagData(&script_tag_);
+	if (parsed <= 0)
+	{
+		return -1;
+	}
+	sum_parsed += parsed;
+
+	return sum_parsed;
+}
+
 ssize_t FlvManager::ParseVideoAudio()
 {
 	size_t sum_parsed = 0;
 
 	for (int i = 0; i <= 1; ++i)
 	{
-		ssize_t parse_result = codec_.DecodeTagHander(buffer_.ReadBegin(), buffer_.ReadableLength(), &video_audio_tags[i]);
-		if (parse_result > 0)
-		{
-			buffer_.AddReadIndex(parse_result);
-		}
-		else if (parse_result < 0)
+		ssize_t parsed = ParseTagHeader(&video_audio_tags[i]);
+		if (parsed <= 0)
 		{
 			return -1;
 		}
-		else
-		{
-			return 0;
-		}
+		sum_parsed += parsed;
 
-		uint32_t data_size = video_audio_tags[i].GetDataSize();
-		if (buffer_.ReadableLength() >= data_size)
-		{
-			video_audio_tags[i].SetData(buffer_.ReadBegin(), data_size);
-			buffer_.AddReadIndex(data_size);
-			parse_result += data_size;
-
-			sum_parsed += parse_result;
-		}
-		else
+		parsed = ParseTagData(&video_audio_tags[i]);
+		if (parsed <= 0)
 		{
 			return -1;
 		}
+		sum_parsed += parsed;
 	}
 	
 
 	return sum_parsed;
 }
 
-ssize_t FlvManager::ParseTagHeader()
+ssize_t FlvManager::ParseTagHeader(FlvTag* tag)
 {
-	if (buffer_.ReadableLength() < FLV_TAG_HEADER_LENGTH)
+	if (buffer_.ReadableLength() < FlvTag::FLV_TAG_HEADER_LENGTH)
 	{
 		return 0;
 	}
 
-	last_tag_ = current_tag_;
-	current_tag_ = new FlvTag();
+	//last_tag_ = current_tag_;
+	//current_tag_ = new FlvTag();
 
-	ssize_t parse_result = codec_.DecodeTagHander(buffer_.ReadBegin(), buffer_.ReadableLength(), current_tag_);
+	ssize_t parse_result = codec_.DecodeTagHander(buffer_.ReadBegin(), buffer_.ReadableLength(), tag);
 	if (parse_result > 0)
 	{
 		buffer_.AddReadIndex(parse_result);
@@ -198,27 +244,26 @@ ssize_t FlvManager::ParseTagHeader()
 	return parse_result;
 }
 
-ssize_t FlvManager::ParseTagData()
+ssize_t FlvManager::ParseTagData(FlvTag* tag)
 {
-	size_t data_size = current_tag_->GetDataSize();
-	size_t remain_size = data_size - current_tag_->GetCurrentDataSize();
+	size_t data_size = tag->GetDataSize();
+	size_t remain_size = data_size - tag->GetCurrentDataSize();
 	size_t buffer_size = buffer_.ReadableLength();
 
 	if (remain_size <= buffer_size)
 	{
-		current_tag_->AppendData(buffer_.ReadBegin(), remain_size);
+		tag->AppendData(buffer_.ReadBegin(), remain_size);
 		buffer_.AddReadIndex(remain_size);
 	}
 	else
 	{
-		current_tag_->AppendData(buffer_.ReadBegin(), buffer_size);
+		tag->AppendData(buffer_.ReadBegin(), buffer_size);
 		buffer_.Reset();
 		return 0;
 	}
 
-	file_tags_.push_back(current_tag_);
+	//file_tags_.push_back(tag);
 	parse_status_ = FlvManager::TAG_HEADER;
-
 	return data_size;
 }
 
@@ -228,6 +273,8 @@ bool FlvManager::CheckTag()
 	{
 		return true;
 	}
+
+	/* Flv文件中 previous_tag_size为上一个Tag的长度 用于校验 相等则正确 否则校验失败*/
 
 	uint32_t tag_size = last_tag_->GetTagSize();
 	uint32_t previous_tag_size = current_tag_->GetPreviousTagSize();
