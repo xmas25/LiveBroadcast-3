@@ -20,11 +20,17 @@ class FlvHeader
 {
 public:
 	
+	/**
+	* @brief FlvHeader长度
+	*/
+	const static int FLV_HEADER_LENGTH = 9;
+	static char DEFAULT_HEADER[];
+
 	FlvHeader() :
-		flv_(),
-		version_(0),
-		type_flag_(0),
-		header_length_(0)
+		flv_("FLV"),
+		version_(1),
+		type_flag_(5),
+		header_length_(0x09000000) // 9的大端序
 	{
 	}
 
@@ -47,11 +53,46 @@ public:
 		return result;
 	}
 
+	ssize_t EncodeToBuffer(char* data, size_t length);
+
 private:
 	std::string flv_; // FLV
 	uint8_t version_; // 1
 	uint8_t type_flag_; // 5
 	uint32_t header_length_; // 9
+};
+
+/**
+ * @brief 由于每个tag的data部分 不加处理会经过大量的拷贝
+ * 这里简单实现了用于减少拷贝次数的包装
+ * 
+ * TODO 零拷贝
+*/
+class FlvTagZeroCopy
+{
+public:
+	explicit FlvTagZeroCopy(const std::string* data);
+	~FlvTagZeroCopy() = default;
+
+	void EncodeHeader(uint32_t previous_tag_size, uint8_t tag_type, uint8_t* data_size,
+		uint8_t* timestamp, uint8_t timestamp_extend, uint8_t* stream_id);
+
+	/**
+	 * @brief 将header和body放入buffer中 会进行拷贝 用于测试阶段
+	 * @return 成功返回字节数 buffer容量不足返回-1
+	*/
+	ssize_t CopyToBuffer(char* buffer, size_t buffer_length);
+
+	/*FlvTagZeroCopy(const FlvTagZeroCopy& rhs) = delete;
+	FlvTagZeroCopy& operator=(const FlvTagZeroCopy& rhs) = delete;*/
+
+	const char* GetHeader() const;
+	const std::string* GetBody() const;
+
+private:
+
+	char header_[15];
+	const std::string* body_;
 };
 
 /**
@@ -61,11 +102,6 @@ private:
 class FlvTag
 {
 public:
-
-	/**
-	* @brief FlvHeader长度
-	*/
-	const static int FLV_HEADER_LENGTH = 9;
 
 	/**
 	 * @brief FlvTagHeader长度
@@ -127,13 +163,7 @@ public:
 	*/
 	ssize_t DecodeTagHander(const char* data, size_t length);
 
-	/**
-	 * @brief 将本FlvTag编码到buffer中
-	 * @param buffer buffer指针
-	 * @param length buffer长度
-	 * @return 编码成功返回编码长度 buffer长度不够返回0
-	*/
-	size_t EncodeTag(const char* buffer, size_t length);
+	FlvTagZeroCopy* GetZeroCopyCache();
 
 	/**
 	 * @brief 初始化成员变量 可以供构造函数调用 也可以用于复用本FlvTag
@@ -151,14 +181,19 @@ public:
 	void SetPreviousTagSize(uint32_t previous_tag_size);
 
 private:
-	uint32_t previous_tag_size_; // 不含previous_tag_size  sizeof 上一个Tag - 4
+	uint32_t previous_tag_size_; // 不含previous_tag_size  sizeof 上一个Tag - 4  大端序保存
 	uint8_t tag_type_; // 音频 8 视频 9 scripts 18
 	uint8_t data_size_[3]; // AudioTag VideoTag 的数据长度 从stream_id后开始算起
 	uint8_t timestamp_[3];
 	uint8_t timestamp_extend_;
 	uint8_t stream_id_[3]; // 0
 
-	std::string data_;
+	std::string body_;
+
+	/* 用于包装body和序列化后的头部 减少拷贝次数*/
+	FlvTagZeroCopy cache_;
+	/* 每个tag仅需要生成一次cache_ 后续直接调用*/
+	bool encode_;
 };
 
 /**
@@ -175,5 +210,4 @@ public:
 
 private:
 };
-
 #endif // !UTILS_CODEC_FLVCODEC_H

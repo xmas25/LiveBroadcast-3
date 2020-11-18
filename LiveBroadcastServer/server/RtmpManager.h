@@ -23,6 +23,8 @@ public:
 	~RtmpManager();
 
 	ssize_t ParseData(Buffer* buffer);
+
+	FlvManager* GetFlvManager();
 private:
 
 	ParseStatus parsed_status_;

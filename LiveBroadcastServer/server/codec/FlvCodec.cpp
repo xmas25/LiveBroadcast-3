@@ -1,9 +1,11 @@
 #include <netinet/in.h>
 #include "server/codec/FlvCodec.h"
 
+char FlvHeader::DEFAULT_HEADER[] = { 0x46, 0x4C, 0x56, 0x01, 0x05, 0x00, 0x00, 0x00, 0x09 };
+
 ssize_t FlvCodec::DecodeFileHeader(const char* data, size_t length, FlvHeader* tag)
 {
-    if (length < FlvTag::FLV_HEADER_LENGTH)
+    if (length < FlvHeader::FLV_HEADER_LENGTH)
     {
         return 0;
     }
@@ -23,7 +25,7 @@ ssize_t FlvCodec::DecodeFileHeader(const char* data, size_t length, FlvHeader* t
         tag->SetInfo(flv, version, type_flag, header_length);
     }
 
-    return FlvTag::FLV_HEADER_LENGTH;
+    return FlvHeader::FLV_HEADER_LENGTH;
 }
 
 ssize_t FlvCodec::DecodeTagHander(const char* data, size_t length, FlvTag* tag)
@@ -36,7 +38,61 @@ ssize_t FlvCodec::DecodeTagHander(const char* data, size_t length, FlvTag* tag)
     return tag->DecodeTagHander(data, length);
 }
 
-FlvTag::FlvTag()
+
+FlvTagZeroCopy::FlvTagZeroCopy(const std::string* data) :
+    body_(data)
+{
+}
+
+void FlvTagZeroCopy::EncodeHeader(uint32_t previous_tag_size, uint8_t tag_type, uint8_t* data_size, uint8_t* timestamp,
+    uint8_t timestamp_extend, uint8_t* stream_id)
+{
+    memcpy(&header_[0], &previous_tag_size, sizeof previous_tag_size);
+    memcpy(&header_[4], &tag_type, 1);
+    memcpy(&header_[5], data_size, 3);
+    memcpy(&header_[8], timestamp, 3);
+    memcpy(&header_[11], &timestamp_extend, 1);
+    memcpy(&header_[12], stream_id, 3);
+}
+
+ssize_t FlvTagZeroCopy::CopyToBuffer(char* buffer, size_t buffer_length)
+{
+    size_t data_len = FlvTag::FLV_TAG_HEADER_LENGTH + body_->length();
+    if (buffer_length < data_len)
+    {
+        return 0;
+    }
+
+    memcpy(buffer, header_, FlvTag::FLV_TAG_HEADER_LENGTH);
+    memcpy(buffer + FlvTag::FLV_TAG_HEADER_LENGTH, body_->data(), body_->length());
+    return data_len;
+}
+
+const char* FlvTagZeroCopy::GetHeader() const
+{
+    return header_;
+}
+
+const std::string* FlvTagZeroCopy::GetBody() const
+{
+    return body_;
+}
+
+FlvTagZeroCopy* FlvTag::GetZeroCopyCache()
+{
+    if (!encode_)
+    {
+        cache_.EncodeHeader(previous_tag_size_, tag_type_, data_size_, timestamp_,
+            timestamp_extend_, stream_id_);
+
+        encode_ = true;
+    }
+    return &cache_;
+}
+
+FlvTag::FlvTag() :
+    cache_(&body_),
+    encode_(false)
 {
     Init();
 }
@@ -69,7 +125,7 @@ uint32_t FlvTag::GetTagSize() const
 
 uint32_t FlvTag::GetCurrentDataSize() const
 {
-    return data_.length();
+    return body_.length();
 }
 
 uint32_t FlvTag::GetRemainDataSize() const
@@ -81,17 +137,17 @@ void FlvTag::SetData(const char* data, size_t length)
 {
     if (length >= GetDataSize())
     {
-        if (!data_.empty())
+        if (!body_.empty())
         {
-            data_.clear();
+            body_.clear();
         }
-        data_.append(data, GetDataSize());
+        body_.append(data, GetDataSize());
     }
 }
 
 void FlvTag::AppendData(const char* data, size_t length)
 {
-    data_.append(data, length);
+    body_.append(data, length);
 }
 
 ssize_t FlvTag::DecodeTagHander(const char* data, size_t length)
@@ -119,10 +175,6 @@ ssize_t FlvTag::DecodeTagHander(const char* data, size_t length)
     return sub;
 }
 
-size_t FlvTag::EncodeTag(const char* buffer, size_t length)
-{
-    return 0;
-}
 
 void FlvTag::Init()
 {
@@ -132,7 +184,7 @@ void FlvTag::Init()
     memset(&timestamp_, 0, sizeof timestamp_);
     timestamp_extend_ = 0;
     memset(&stream_id_, 0, sizeof stream_id_);
-    data_.clear();
+    body_.clear();
 }
 
 void FlvTag::SetTagType(uint8_t tag_type)
@@ -157,5 +209,18 @@ void FlvTag::SetSteamId(uint8_t* stream_id)
 
 void FlvTag::SetPreviousTagSize(uint32_t previous_tag_size)
 {
-    previous_tag_size_ = previous_tag_size;
+    // 统一使用大端序存储数据 便于统一序列化
+    previous_tag_size_ = htons(previous_tag_size);
+}
+
+ssize_t FlvHeader::EncodeToBuffer(char* data, size_t length)
+{
+    if (length < FLV_HEADER_LENGTH)
+    {
+        return 0;
+    }
+
+    memcpy(&data[0], DEFAULT_HEADER, sizeof DEFAULT_HEADER);
+
+    return FLV_HEADER_LENGTH;
 }

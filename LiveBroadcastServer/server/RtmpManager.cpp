@@ -75,6 +75,11 @@ ssize_t RtmpManager::ParseData(Buffer* buffer)
 	return current_loop_parsed;
 }
 
+FlvManager* RtmpManager::GetFlvManager()
+{
+	return &flv_manager_;
+}
+
 ssize_t RtmpManager::ParseFirstHeader(Buffer* buffer)
 {
 	if (buffer->ReadableLength() < RTMP_START_PARSE_LENGTH)
@@ -101,21 +106,28 @@ ssize_t RtmpManager::ParseFirstHeader(Buffer* buffer)
 ssize_t RtmpManager::ParseScriptPack(Buffer* buffer)
 {
 	ssize_t result = 0;
-	ssize_t parsed = 0;
-	do
+	for (;;)
 	{
-		parsed = rtmp_codec_.DecodeHeader(buffer->ReadBegin(), buffer->ReadableLength(), &rtmp_pack_);
+		ssize_t parsed = rtmp_codec_.DecodeHeader(buffer->ReadBegin(), buffer->ReadableLength(), &rtmp_pack_);
+		buffer->AddReadIndex(parsed);
+		result += parsed;
+
 		if (parsed <= 0)
 		{
 			return -1;
 		}
-		result += parsed;
-		result += rtmp_pack_.GetDataSize();
-		buffer->AddReadIndex(parsed);
-		buffer->AddReadIndex(rtmp_pack_.GetDataSize());
 
-	} while(rtmp_pack_.GetRtmpPackType() != RtmpPack::RTMP_SCRIPT);
-	
+		if (rtmp_pack_.GetRtmpPackType() != RtmpPack::RTMP_SCRIPT)
+		{
+			buffer->AddReadIndex(rtmp_pack_.GetDataSize());
+			result += rtmp_pack_.GetDataSize();
+		}
+		else
+		{
+			break;
+		}
+	}
+
 	FlvTag* script_tag = flv_manager_.GetScriptTag();
 
 	/*
@@ -123,6 +135,8 @@ ssize_t RtmpManager::ParseScriptPack(Buffer* buffer)
 	*/
 	rtmp_pack_.EncodeHeaderToFlvTag(script_tag);
 	script_tag->SetData(buffer->ReadBegin(), script_tag->GetDataSize());
+	buffer->AddReadIndex(script_tag->GetDataSize());
+	result += script_tag->GetDataSize();
 
 	/* 这里不需要额外移动buffer 因为上方的do while 进行了移动*/
 
@@ -145,20 +159,20 @@ ssize_t RtmpManager::ParseVideoAudio(Buffer* buffer)
 	for (int i = 0; i < 2; ++i)
 	{
 		parsed = rtmp_codec_.DecodeHeader(buffer->ReadBegin(), buffer->ReadableLength(), &rtmp_pack_);
+		buffer->AddReadIndex(parsed);
+		result += parsed;
 		if (parsed <= 0)
 		{
 			return -1;
 		}
-		result += parsed;
-		result += rtmp_pack_.GetDataSize();
-		buffer->AddReadIndex(parsed);
-		buffer->AddReadIndex(rtmp_pack_.GetDataSize());
 
 		if (rtmp_pack_.GetRtmpPackType() == RtmpPack::RTMP_AUDIO || 
 			rtmp_pack_.GetRtmpPackType() == RtmpPack::RTMP_VIDEO)
 		{
 			rtmp_pack_.EncodeHeaderToFlvTag(&tag[i]);
 			tag[i].SetData(buffer->ReadBegin(), tag[i].GetDataSize());
+			buffer->AddReadIndex(rtmp_pack_.GetDataSize());
+			result += rtmp_pack_.GetDataSize();
 		}
 		else
 		{

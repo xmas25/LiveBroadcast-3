@@ -8,6 +8,7 @@
 #include "utils/Buffer.h"
 
 /**
+ * 从Flv文件中解析出数据
  * 用于管理FlvHeader和FlvTag数据
 */
 
@@ -50,6 +51,18 @@ public:
 	FlvTag* GetVideoAudioTags();
 
 	void PushBackFlvTagAndSetPreviousSize(FlvTag* flv_tag);
+
+
+	/**
+	 * TODO 进行缓存
+	 * @brief 将FlvHeader script_tag_ 和第一个音频以及一个视频信息编码到缓冲区中
+	 * 即使编码成功也不清除上述四者内容 方便继续使用
+	 * @param buffer 
+	 * @return 成功返回序列化的字节数 失败返回-1 缓冲区长度不足返回0
+	*/
+	ssize_t EncodeHeadersToBuffer(Buffer* buffer);
+
+	std::vector<FlvTag*>* GetFlvTags();
 private:
 
 	FlvCodec codec_;

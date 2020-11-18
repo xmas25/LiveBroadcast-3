@@ -75,7 +75,7 @@ ssize_t File::Read(Buffer* buffer)
 	return result;
 }
 
-ssize_t File::Write(char* buffer, size_t length)
+ssize_t File::Write(const char* buffer, size_t length)
 {
 	if (!file_)
 	{

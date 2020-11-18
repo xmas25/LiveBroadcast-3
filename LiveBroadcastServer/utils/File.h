@@ -35,7 +35,7 @@ public:
 
 	ssize_t Read(Buffer* buffer);
 
-	ssize_t Write(char* buffer, size_t length);
+	ssize_t Write(const char* buffer, size_t length);
 
 	size_t GetFileSize();
 

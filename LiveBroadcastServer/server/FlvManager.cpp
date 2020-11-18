@@ -1,4 +1,5 @@
 #include <cstdio>
+#include <cassert>
 #include "server/FlvManager.h"
 
 FlvManager::FlvManager() :
@@ -148,6 +149,42 @@ void FlvManager::PushBackFlvTagAndSetPreviousSize(FlvTag* flv_tag)
 	
 }
 
+ssize_t FlvManager::EncodeHeadersToBuffer(Buffer* buffer)
+{
+	uint32_t data_length = FlvHeader::FLV_HEADER_LENGTH + script_tag_.GetTagSize() + 4
+		+ video_audio_tags[0].GetTagSize() + 4 + video_audio_tags[1].GetTagSize() + 4;
+
+	if (buffer->WritableLength() < data_length)
+	{
+		return 0;
+	}
+
+	ssize_t result = flv_header_.EncodeToBuffer(buffer->WriteBegin(), buffer->WritableLength());
+	assert(result > 0);
+	buffer->AddWriteIndex(result);
+
+	FlvTagZeroCopy* copy = script_tag_.GetZeroCopyCache();
+	result = copy->CopyToBuffer(buffer->WriteBegin(), buffer->WritableLength());
+	assert(result > 0);
+	buffer->AddWriteIndex(result);
+
+	for (int i = 0; i < 2; ++i)
+	{
+		copy = video_audio_tags[i].GetZeroCopyCache();
+		result = copy->CopyToBuffer(buffer->WriteBegin(), buffer->WritableLength());
+		assert(result > 0);
+		buffer->AddWriteIndex(result);
+	}
+
+	assert(data_length == buffer->ReadableLength());
+
+	return data_length;
+}
+
+std::vector<FlvTag*>* FlvManager::GetFlvTags()
+{
+	return &flv_tags_;
+}
 
 size_t FlvManager::ReadDataFromFile()
 {
