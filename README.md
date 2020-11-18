@@ -1,4 +1,5 @@
 当前进度 `服务器端`解析Rtmp推流保存并为可以播放的Flv文件 (初版完成)
+
 服务器端代码量 包含网络部分 3000余行 - 2020年11月18日
 
 # 项目规划
@@ -8,6 +9,8 @@
 项目不打算开发UI方面的功能, 视频将使用第三方的支持HttpFlv拉流的播放器来播放(如PotPlayer)
 
 开发可以接收Rtmp推流的`服务器端`  (初版完成)
+
+
 
 `服务器端`可以`接收HttpFlv的拉流` (未开发)
 
@@ -19,7 +22,11 @@
 
 主播使用`RTMP推流软件(如Obs)`将RTMP流发送到`服务器端` `服务器端`将Rtmp流以FLv格式保存在内存缓冲区 或者写入Flv文件
 
-观看者下载`观看者客户端`从`服务器端`获得Socket数据流 (未开发)
+观看者直接使用`服务器端`生成的HTTPFLV地址 拉流观看
+
+
+
+观看者下载`观看者客户端`从`服务器端`获得Socket数据流
 
 `观看者客户端`将Socket数据流包装成HTTP协议 生成本地连接如`http://127.0.0.1:4000/xxxxx.mp4` 使用第三方网络视频播放器进行播放
 
@@ -172,6 +179,7 @@ Obs发送`Video Data`其中Data为sps_pps_tag的data部分  视频数据包
 
 # 文件介绍
 
+```
 ├── CMakeLists.txt 总配置文件
 ├── CMakeSettings.json vsstudio2019 cmake项目配置文件
 ├── main.cpp 接收Obs推流数据 除去握手和建立连接部分 保存到data中 实测会导致 obs发送的publish也被保存
@@ -216,3 +224,4 @@ Obs发送`Video Data`其中Data为sps_pps_tag的data部分  视频数据包
     ├── CMakeLists.txt
     ├── File.cpp 文件对象 用于简单的读写文件
     └── File.h
+```
