@@ -42,12 +42,6 @@ void Buffer::AddReadIndex(size_t index)
 	read_idx_ += index;
 }
 
-void Buffer::AddReadIndexAndAdjust(size_t index)
-{
-	AddReadIndex(index);
-	AdjustBuffer();
-}
-
 char* Buffer::WriteBegin()
 {
 	return &buffer_[write_idx_];
@@ -86,4 +80,22 @@ size_t Buffer::GetSumRead() const
 size_t Buffer::GetSumWrite() const
 {
 	return sum_write_;
+}
+
+size_t Buffer::AppendData(const char* data, size_t length)
+{
+	AdjustBuffer();
+	size_t result = std::min(length, WritableLength());
+	memcpy(WriteBegin(), data, result);
+	AddWriteIndex(result);
+	return result;
+}
+
+size_t Buffer::AppendData(const std::string* data)
+{
+	if (!data)
+	{
+		return 0;
+	}
+	return AppendData(data->data(), data->length());
 }

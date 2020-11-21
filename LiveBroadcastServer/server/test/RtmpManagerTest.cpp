@@ -40,12 +40,10 @@ int main()
 	ssize_t write_bytes;
 	for (FlvTag* tag : *flv_tags)
 	{
-		FlvTagZeroCopy* copy = tag->GetZeroCopyCache();
-		const char* header = copy->GetHeader();
-		write_bytes = file_write.Write(header, FlvTag::FLV_TAG_HEADER_LENGTH);
+		write_bytes = file_write.Write(tag->GetHeader(), FlvTag::FLV_TAG_HEADER_LENGTH);
 		assert(write_bytes == FlvTag::FLV_TAG_HEADER_LENGTH);
 
-		const std::string* body = copy->GetBody();
+		const std::string* body = tag->GetBody()->GetBody();
 		write_bytes = file_write.Write(body->data(), body->length());
 		assert(write_bytes == static_cast<ssize_t>(body->length()));
 	}

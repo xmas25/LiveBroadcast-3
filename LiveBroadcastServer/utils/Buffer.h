@@ -1,7 +1,8 @@
-#ifndef UTILS_BUFFER
-#define UTILS_BUFFER
+#ifndef UTILS_BUFFER_H
+#define UTILS_BUFFER_H
 
 #include <vector>
+#include <string>
 
 constexpr int DEFAULT_BUFFER_SIZE = 4096;
 constexpr int IDX_BEGIN = 8;
@@ -22,8 +23,6 @@ public:
 	void AddWriteIndex(size_t index);
 	void AddReadIndex(size_t index);
 
-	void AddReadIndexAndAdjust(size_t index);
-
 	char* WriteBegin();
 
 	char* ReadBegin();
@@ -34,6 +33,10 @@ public:
 
 	size_t GetSumRead() const;
 	size_t GetSumWrite() const;
+
+	size_t AppendData(const char* data, size_t length);
+
+	size_t AppendData(const std::string* data);
 private:
 
 	std::vector<char> buffer_;
@@ -44,4 +47,4 @@ private:
 };
 
 
-#endif // !UTILS_BUFFER
+#endif // !UTILS_BUFFER_H

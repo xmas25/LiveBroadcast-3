@@ -33,27 +33,37 @@ ssize_t RtmpPack::DecodeHeader(const char* data, size_t length)
 
 	fmt_ = static_cast<RtmpPackFmt>(fmt);
 
-	ssize_t result = 1;
+	ssize_t result;
 	switch (fmt_)
 	{
 	case FMT0:
-		result += DecodeFmt0(data + 1, length - 1);
+		result = DecodeFmt0(data + 1, length - 1);
 		break;
 	case FMT1:
-		result += DecodeFmt1(data + 1, length - 1);
+		result = DecodeFmt1(data + 1, length - 1);
 		break;
 	case FMT2:
-		result += DecodeFmt2(data + 1, length - 1);
+		result = DecodeFmt2(data + 1, length - 1);
 		break;
 	case FMT3:
-		result += FMT3_HEADER_LENGTH;
+		result = FMT3_HEADER_LENGTH;
+
+		return result + 1; /* 不直接返回会与下面逻辑混淆*/
+
 		break;
 	default:
 		result = -1;
 		break;
 	}
 
-	return result;
+	if (result <= 0)
+	{
+		return result;
+	}
+	else
+	{
+		return result + 1;// 2b fmt and 6b csid_
+	}
 }
 
 bool RtmpPack::EncodeHeaderToFlvTag(FlvTag* flv_tag)

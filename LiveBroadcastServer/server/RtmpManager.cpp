@@ -54,6 +54,10 @@ ssize_t RtmpManager::ParseData(Buffer* buffer)
 			else if (parsed_status_ == RtmpManager::PARSE_RTMP_FIRST_HEADER)
 			{
 				parsed = ParseFirstHeader(buffer);
+				if (parsed < 0)
+				{
+					printf("ParseFirstHeader error\n");
+				}
 
 			}
 		}
@@ -134,11 +138,11 @@ ssize_t RtmpManager::ParseScriptPack(Buffer* buffer)
 	将rtmp_pack的header部分编码到FlvTag中 然后从buffer拷贝data到FlvTag中减少拷贝次数
 	*/
 	rtmp_pack_.EncodeHeaderToFlvTag(script_tag);
-	script_tag->SetData(buffer->ReadBegin(), script_tag->GetDataSize());
+	script_tag->AppendData(buffer->ReadBegin(), script_tag->GetDataSize());
 	buffer->AddReadIndex(script_tag->GetDataSize());
 	result += script_tag->GetDataSize();
 
-	/* 这里不需要额外移动buffer 因为上方的do while 进行了移动*/
+	
 
 	return result;
 }
@@ -170,7 +174,7 @@ ssize_t RtmpManager::ParseVideoAudio(Buffer* buffer)
 			rtmp_pack_.GetRtmpPackType() == RtmpPack::RTMP_VIDEO)
 		{
 			rtmp_pack_.EncodeHeaderToFlvTag(&tag[i]);
-			tag[i].SetData(buffer->ReadBegin(), tag[i].GetDataSize());
+			tag[i].AppendData(buffer->ReadBegin(), tag[i].GetDataSize());
 			buffer->AddReadIndex(rtmp_pack_.GetDataSize());
 			result += rtmp_pack_.GetDataSize();
 		}

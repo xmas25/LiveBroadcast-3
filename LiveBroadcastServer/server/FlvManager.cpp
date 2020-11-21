@@ -163,17 +163,17 @@ ssize_t FlvManager::EncodeHeadersToBuffer(Buffer* buffer)
 	assert(result > 0);
 	buffer->AddWriteIndex(result);
 
-	FlvTagZeroCopy* copy = script_tag_.GetZeroCopyCache();
-	result = copy->CopyToBuffer(buffer->WriteBegin(), buffer->WritableLength());
-	assert(result > 0);
-	buffer->AddWriteIndex(result);
+	const FlvTagBody* body = script_tag_.GetBody();
+
+	buffer->AppendData(script_tag_.GetHeader(), FlvTag::FLV_TAG_HEADER_LENGTH);
+	buffer->AppendData(body->GetBody());
 
 	for (int i = 0; i < 2; ++i)
 	{
-		copy = video_audio_tags[i].GetZeroCopyCache();
-		result = copy->CopyToBuffer(buffer->WriteBegin(), buffer->WritableLength());
-		assert(result > 0);
-		buffer->AddWriteIndex(result);
+		body = video_audio_tags[i].GetBody();
+
+		buffer->AppendData(video_audio_tags[i].GetHeader(), FlvTag::FLV_TAG_HEADER_LENGTH);
+		buffer->AppendData(body->GetBody());
 	}
 
 	assert(data_length == buffer->ReadableLength());

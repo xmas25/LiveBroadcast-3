@@ -73,6 +73,11 @@ public:
 
 	ssize_t DecodeHeader(const char* data, size_t length);
 
+	/**
+	 * @brief 将RtmpPack的头部部分 转换到 FlvTag的头部
+	 * @param flv_tag 
+	 * @return 
+	*/
 	bool EncodeHeaderToFlvTag(FlvTag* flv_tag);
 
 	RtmpPackType GetRtmpPackType() const;
@@ -113,6 +118,13 @@ public:
 	RtmpCodec() = default;
 	~RtmpCodec() = default;
 
+	/**
+	 * @brief 解析数据存储到 rtmp_pack_中
+	 * @param data 数据指针
+	 * @param length 数据长度
+	 * @param rtmp_pack_ 存储到的包
+	 * @return 成功返回解析字节数 失败返回-1 长度不足返回0
+	*/
 	ssize_t DecodeHeader(const char* data, size_t length, RtmpPack* rtmp_pack_);
 
 private:
