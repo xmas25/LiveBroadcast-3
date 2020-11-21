@@ -1,8 +1,8 @@
 #ifndef SERVER_RTMPMANAGER_H
 #define SERVER_RTMPMANAGER_H
 
-#include "server/codec/RtmpCodec.h"
-#include "server/FlvManager.h"
+#include "utils/codec/RtmpCodec.h"
+#include "utils/codec/FlvManager.h"
 
 constexpr int RTMP_START_PARSE_LENGTH = 1000;
 constexpr int RTMP_CHUNK_SIZE = 4096;
@@ -38,9 +38,9 @@ private:
 
 	FlvTag* current_tag_;
 
-	/* ÓÉÓÚchunkµÄ·Ö¿é´æÔÚ µ¼ÖÂ µ±body´óÓÚ4096×Ö½ÚÊ±, Ã¿¶ÁÈ¡4096¸ö×Ö½Ú ĞèÒªÖØĞÂ½âÎöÒ»´Îheader¹ÊÔÚ´Ë¼ÇÂ¼*/
+	/* ç”±äºchunkçš„åˆ†å—å­˜åœ¨ å¯¼è‡´ å½“bodyå¤§äº4096å­—èŠ‚æ—¶, æ¯è¯»å–4096ä¸ªå­—èŠ‚ éœ€è¦é‡æ–°è§£æä¸€æ¬¡headeræ•…åœ¨æ­¤è®°å½•*/
 	uint32_t read_chunk_size_;
-	/* ÓÃÓÚ±êÊ¶µ±Ç°chunkÊÇ·ñ½âÎöÍê±Ï Î´½âÎöÍê²»ÄÜ´´½¨ĞÂµÄtag*/
+	/* ç”¨äºæ ‡è¯†å½“å‰chunkæ˜¯å¦è§£æå®Œæ¯• æœªè§£æå®Œä¸èƒ½åˆ›å»ºæ–°çš„tag*/
 	bool chunk_over_;
 
 	ssize_t ParseFirstHeader(Buffer* buffer);

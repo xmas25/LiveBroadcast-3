@@ -1,13 +1,13 @@
-#include "RtmpManager.h"
+#include "utils/codec/RtmpManager.h"
 
 RtmpManager::RtmpManager():
-	parsed_status_(RtmpManager::PARSE_RTMP_FIRST_HEADER),
-	parsed_length_(0),
-	rtmp_pack_(),
-	rtmp_codec_(),
-	flv_manager_(),
-	read_chunk_size_(0),
-	chunk_over_(true)
+		parsed_status_(RtmpManager::PARSE_RTMP_FIRST_HEADER),
+		parsed_length_(0),
+		rtmp_pack_(),
+		rtmp_codec_(),
+		flv_manager_(),
+		read_chunk_size_(0),
+		chunk_over_(true)
 {
 }
 
@@ -72,7 +72,7 @@ ssize_t RtmpManager::ParseData(Buffer* buffer)
 			break;
 		}
 		current_loop_parsed += parsed;
-		
+
 	}
 
 	parsed_length_ += current_loop_parsed;
@@ -96,7 +96,7 @@ ssize_t RtmpManager::ParseFirstHeader(Buffer* buffer)
 	{
 		return -1;
 	}
-	
+
 	ssize_t parsed_video_audio = ParseVideoAudio(buffer);
 	if (parsed_video_audio < 0)
 	{
@@ -135,14 +135,14 @@ ssize_t RtmpManager::ParseScriptPack(Buffer* buffer)
 	FlvTag* script_tag = flv_manager_.GetScriptTag();
 
 	/*
-	½«rtmp_packµÄheader²¿·Ö±àÂëµ½FlvTagÖĞ È»ºó´Óbuffer¿½±´dataµ½FlvTagÖĞ¼õÉÙ¿½±´´ÎÊı
+	å°†rtmp_packçš„headeréƒ¨åˆ†ç¼–ç åˆ°FlvTagä¸­ ç„¶åä»bufferæ‹·è´dataåˆ°FlvTagä¸­å‡å°‘æ‹·è´æ¬¡æ•°
 	*/
 	rtmp_pack_.EncodeHeaderToFlvTag(script_tag);
 	script_tag->AppendData(buffer->ReadBegin(), script_tag->GetDataSize());
 	buffer->AddReadIndex(script_tag->GetDataSize());
 	result += script_tag->GetDataSize();
 
-	
+
 
 	return result;
 }
@@ -150,13 +150,13 @@ ssize_t RtmpManager::ParseScriptPack(Buffer* buffer)
 ssize_t RtmpManager::ParseVideoAudio(Buffer* buffer)
 {
 	/**
-	* ¾ÍObsÍÆÁ÷µÄ×¥°ü½á¹ûÀ´¿´ ÒôÊÓÆµµÄÒ»¸öTagÊÇÁ¬×ÅµÄ ÕâÀï¼ò»¯´¦Àí Èç¹û²»Á¬ĞøÔò·µ»Ø´íÎó
+	* å°±Obsæ¨æµçš„æŠ“åŒ…ç»“æœæ¥çœ‹ éŸ³è§†é¢‘çš„ä¸€ä¸ªTagæ˜¯è¿ç€çš„ è¿™é‡Œç®€åŒ–å¤„ç† å¦‚æœä¸è¿ç»­åˆ™è¿”å›é”™è¯¯
 	*/
 	ssize_t result = 0;
 	ssize_t parsed = 0;
 
 	/**
-	 * tagÎªÒ»¸öÁ½¸öÔªËØµÄÊı×éÖ¸Õë Á½¸öÔªËØ·Ö±ğÎªµÚÒ»¸öÊÓÆµºÍÒôÆµTag
+	 * tagä¸ºä¸€ä¸ªä¸¤ä¸ªå…ƒç´ çš„æ•°ç»„æŒ‡é’ˆ ä¸¤ä¸ªå…ƒç´ åˆ†åˆ«ä¸ºç¬¬ä¸€ä¸ªè§†é¢‘å’ŒéŸ³é¢‘Tag
 	*/
 	FlvTag* tag = flv_manager_.GetVideoAudioTags();
 
@@ -170,7 +170,7 @@ ssize_t RtmpManager::ParseVideoAudio(Buffer* buffer)
 			return -1;
 		}
 
-		if (rtmp_pack_.GetRtmpPackType() == RtmpPack::RTMP_AUDIO || 
+		if (rtmp_pack_.GetRtmpPackType() == RtmpPack::RTMP_AUDIO ||
 			rtmp_pack_.GetRtmpPackType() == RtmpPack::RTMP_VIDEO)
 		{
 			rtmp_pack_.EncodeHeaderToFlvTag(&tag[i]);
@@ -180,7 +180,7 @@ ssize_t RtmpManager::ParseVideoAudio(Buffer* buffer)
 		}
 		else
 		{
-			// ¼ò»¯´¦Àí Èç¹û²»Á¬ĞøÔò·µ»Ø´íÎó
+			// ç®€åŒ–å¤„ç† å¦‚æœä¸è¿ç»­åˆ™è¿”å›é”™è¯¯
 			return -1;
 		}
 	}
@@ -203,14 +203,14 @@ ssize_t RtmpManager::ParseHeader(Buffer* buffer)
 	buffer->AddReadIndex(parsed);
 
 	/**
-	 * µ±Ç°chunkÎ´½áÊøµÄÊ±ºò »á¼ÌĞø·¢ËÍÊı¾İ appendµ½µ±Ç°µÄtag¼´¿É ²»Ó¦¸ÃnewÒ»¸öĞÂµÄ
+	 * å½“å‰chunkæœªç»“æŸçš„æ—¶å€™ ä¼šç»§ç»­å‘é€æ•°æ® appendåˆ°å½“å‰çš„tagå³å¯ ä¸åº”è¯¥newä¸€ä¸ªæ–°çš„
 	*/
 	if (chunk_over_)
 	{
 		current_tag_ = new FlvTag;
 		rtmp_pack_.EncodeHeaderToFlvTag(current_tag_);
 	}
-	
+
 
 	parsed_status_ = RtmpManager::PARSE_RTMP_BODY;
 
@@ -219,8 +219,8 @@ ssize_t RtmpManager::ParseHeader(Buffer* buffer)
 
 ssize_t RtmpManager::ParseBody(Buffer* buffer)
 {
-	
-	// TODO ¹ıÂËµô·ÇÒôÆµÊı¾İ°üµÄÄÚÈİ ÓÉÓÚ¹ıÂËÈÔĞè¶ªÆúbodyÊı¾İ ÕâÀïÔİÊ±¼ò»¯
+
+	// TODO è¿‡æ»¤æ‰ééŸ³é¢‘æ•°æ®åŒ…çš„å†…å®¹ ç”±äºè¿‡æ»¤ä»éœ€ä¸¢å¼ƒbodyæ•°æ® è¿™é‡Œæš‚æ—¶ç®€åŒ–
 
 	uint8_t csid = rtmp_pack_.GetCsid();
 	if (csid != MOVIE_CSID)
@@ -240,8 +240,8 @@ ssize_t RtmpManager::ParseBody(Buffer* buffer)
 	size_t readable = buffer->ReadableLength();
 	size_t remain = current_tag_->GetRemainDataSize();
 
-	// Ö»ÓĞÔÚ¶ÁÂúÒ»¸öchunk·Ö¿é4096×Ö½Úºó ·µ»Ø½âÎöÒ»¸öĞÂµÄheaderµÄÊ±ºò
-	// µ±remainĞ¡ÓÚµÈÓÚRTMP_CHUNK_SIZEµÄÊ±ºòËµÃ÷ ´Ëchunk·Ö¿é½áÊøÁË
+	// åªæœ‰åœ¨è¯»æ»¡ä¸€ä¸ªchunkåˆ†å—4096å­—èŠ‚å è¿”å›è§£æä¸€ä¸ªæ–°çš„headerçš„æ—¶å€™
+	// å½“remainå°äºç­‰äºRTMP_CHUNK_SIZEçš„æ—¶å€™è¯´æ˜ æ­¤chunkåˆ†å—ç»“æŸäº†
 	if (remain <= RTMP_CHUNK_SIZE && read_chunk_size_ == 0)
 	{
 		chunk_over_ = true;
@@ -253,7 +253,7 @@ ssize_t RtmpManager::ParseBody(Buffer* buffer)
 
 	if (chunk_over_)
 	{
-		// µ±Ç°chunkÃ»ÓĞ·Ö¿é »òÕß×îºóÒ»¸öchunk·Ö¿é±»½ÓÊÕ
+		// å½“å‰chunkæ²¡æœ‰åˆ†å— æˆ–è€…æœ€åä¸€ä¸ªchunkåˆ†å—è¢«æ¥æ”¶
 
 		if (readable < remain)
 		{
@@ -272,7 +272,7 @@ ssize_t RtmpManager::ParseBody(Buffer* buffer)
 	}
 	else
 	{
-		// µ±Ç°chunk·Ö¿éÃ»ÓĞÈ«²¿½ÓÊÜ
+		// å½“å‰chunkåˆ†å—æ²¡æœ‰å…¨éƒ¨æ¥å—
 		size_t current_chunk_remain = RTMP_CHUNK_SIZE - read_chunk_size_;
 		if (readable < current_chunk_remain)
 		{
@@ -285,12 +285,12 @@ ssize_t RtmpManager::ParseBody(Buffer* buffer)
 			current_tag_->AppendData(buffer->ReadBegin(), current_chunk_remain);
 			buffer->AddReadIndex(current_chunk_remain);
 
-			/* chunk ½áÊø Çå³ıµ±Ç°chunkÒÑ¶Á×Ö½ÚÊı*/
+			/* chunk ç»“æŸ æ¸…é™¤å½“å‰chunkå·²è¯»å­—èŠ‚æ•°*/
 			read_chunk_size_ = 0;
 
 			parsed_status_ = RtmpManager::PARSE_RTMP_HEADER;
 		}
-		// µ±Ç°chunk·Ö¿é½áÊø µ«ÊÇchunkÎ´½áÊø ĞèÒª¼ÌĞø½âÎöHeader ÅĞ¶Ï½ÓÏÂÀ´ÊÇ¶àÉÙ×Ö½ÚÒªAppendÈëData
+		// å½“å‰chunkåˆ†å—ç»“æŸ ä½†æ˜¯chunkæœªç»“æŸ éœ€è¦ç»§ç»­è§£æHeader åˆ¤æ–­æ¥ä¸‹æ¥æ˜¯å¤šå°‘å­—èŠ‚è¦Appendå…¥Data
 		return 0;
 	}
 }

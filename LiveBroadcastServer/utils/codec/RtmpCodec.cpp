@@ -1,10 +1,5 @@
-#include "RtmpCodec.h"
-#include "RtmpCodec.h"
-#include "RtmpCodec.h"
-#include "RtmpCodec.h"
-#include "RtmpCodec.h"
-#include "server/codec/RtmpCodec.h"
-#include "server/codec/FlvCodec.h"
+#include "utils/codec/RtmpCodec.h"
+#include "utils/codec/FlvCodec.h"
 
 ssize_t RtmpCodec::DecodeHeader(const char* data, size_t length, RtmpPack* rtmp_pack_)
 {
@@ -36,24 +31,24 @@ ssize_t RtmpPack::DecodeHeader(const char* data, size_t length)
 	ssize_t result;
 	switch (fmt_)
 	{
-	case FMT0:
-		result = DecodeFmt0(data + 1, length - 1);
-		break;
-	case FMT1:
-		result = DecodeFmt1(data + 1, length - 1);
-		break;
-	case FMT2:
-		result = DecodeFmt2(data + 1, length - 1);
-		break;
-	case FMT3:
-		result = FMT3_HEADER_LENGTH;
+		case FMT0:
+			result = DecodeFmt0(data + 1, length - 1);
+			break;
+		case FMT1:
+			result = DecodeFmt1(data + 1, length - 1);
+			break;
+		case FMT2:
+			result = DecodeFmt2(data + 1, length - 1);
+			break;
+		case FMT3:
+			result = FMT3_HEADER_LENGTH;
 
-		return result + 1; /* 不直接返回会与下面逻辑混淆*/
+			return result + 1; /* 涓嶇洿鎺ヨ繑鍥炰細涓庝笅闈㈤�昏緫娣锋穯*/
 
-		break;
-	default:
-		result = -1;
-		break;
+			break;
+		default:
+			result = -1;
+			break;
 	}
 
 	if (result <= 0)
@@ -148,7 +143,7 @@ void RtmpPack::SetPackType(uint8_t type)
 uint32_t RtmpPack::GetDataSize() const
 {
 	/*
-	 *data_size为三个字节的十六进制数据
+	 *data_size涓轰笁涓瓧鑺傜殑鍗佸叚杩涘埗鏁版嵁
 	*/
 	return data_size_[0] * 65536 + data_size_[1] * 256 + data_size_[2];
 }

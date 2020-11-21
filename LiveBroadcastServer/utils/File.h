@@ -5,9 +5,6 @@
 #include <cstdio>
 #include <sys/stat.h>
 
-/**
- * 用于打开指定的文件 进行读写操作
-*/
 class Buffer;
 class File
 {

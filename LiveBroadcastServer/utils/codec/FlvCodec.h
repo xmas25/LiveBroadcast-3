@@ -7,35 +7,35 @@
 #include <string>
 
 /**
- * ¸ºÔğFlvÎÄ¼şµÄ±àÂëºÍ½âÂë
- * 
- * ½«FlvÎÄ¼şÊı¾İÁ÷½âÂë»ñµÃ FlvTag Vector
- * ½«FlvTag±àÂë³Échar* Êı¾İÁ÷
+ * è´Ÿè´£Flvæ–‡ä»¶çš„ç¼–ç å’Œè§£ç 
+ *
+ * å°†Flvæ–‡ä»¶æ•°æ®æµè§£ç è·å¾— FlvTag Vector
+ * å°†FlvTagç¼–ç æˆchar* æ•°æ®æµ
 */
 
 /**
- * @brief Î»ÓÚFlvÎÄ¼şÍ· ÓĞÇÒ½öÓĞÒ»¸ö
+ * @brief ä½äºFlvæ–‡ä»¶å¤´ æœ‰ä¸”ä»…æœ‰ä¸€ä¸ª
 */
 class FlvHeader
 {
 public:
-	
+
 	/**
-	* @brief FlvHeader³¤¶È
+	* @brief FlvHeaderé•¿åº¦
 	*/
 	const static int FLV_HEADER_LENGTH = 9;
 	static char DEFAULT_HEADER[];
 
 	FlvHeader() :
-		flv_("FLV"),
-		version_(1),
-		type_flag_(5),
-		header_length_(0x09000000) // 9µÄ´ó¶ËĞò
+			flv_("FLV"),
+			version_(1),
+			type_flag_(5),
+			header_length_(0x09000000) // 9çš„å¤§ç«¯åº
 	{
 	}
 
 	void SetInfo(const std::string& flv, uint8_t version, uint8_t type_flag,
-		uint32_t header_length)
+			uint32_t header_length)
 	{
 		flv_ = flv;
 		version_ = version;
@@ -45,10 +45,10 @@ public:
 
 	std::string DebugInfo()
 	{
-		std::string result = "flv: " + flv_ + 
-			",version: " + std::to_string(version_) + 
-			",type_flag: " + std::to_string(type_flag_) + 
-			",header_length: " + std::to_string(header_length_);
+		std::string result = "flv: " + flv_ +
+							 ",version: " + std::to_string(version_) +
+							 ",type_flag: " + std::to_string(type_flag_) +
+							 ",header_length: " + std::to_string(header_length_);
 
 		return result;
 	}
@@ -63,10 +63,10 @@ private:
 };
 
 /**
- * @brief ÓÉÓÚÃ¿¸ötagµÄdata²¿·Ö ²»¼Ó´¦Àí»á¾­¹ı´óÁ¿µÄ¿½±´
- * ÕâÀï¼òµ¥ÊµÏÖÁËÓÃÓÚ¼õÉÙ¿½±´´ÎÊıµÄ°ü×°
- * 
- * TODO Ìæ»»µôµÍĞ§µÄ std::string
+ * @brief ç”±äºæ¯ä¸ªtagçš„dataéƒ¨åˆ† ä¸åŠ å¤„ç†ä¼šç»è¿‡å¤§é‡çš„æ‹·è´
+ * è¿™é‡Œç®€å•å®ç°äº†ç”¨äºå‡å°‘æ‹·è´æ¬¡æ•°çš„åŒ…è£…
+ *
+ * TODO æ›¿æ¢æ‰ä½æ•ˆçš„ std::string
 */
 class FlvTagBody
 {
@@ -88,15 +88,15 @@ private:
 };
 
 /**
- * @brief FlvTag FlvÎÄ¼şTag º¬TagÍ·ºÍTag Data
- * ÔÚFlvÎÄ¼şFlvHeaderºó ÎªFlvTagµÄ¼¯ºÏ
+ * @brief FlvTag Flvæ–‡ä»¶Tag å«Tagå¤´å’ŒTag Data
+ * åœ¨Flvæ–‡ä»¶FlvHeaderå ä¸ºFlvTagçš„é›†åˆ
 */
 class FlvTag
 {
 public:
 
 	/**
-	 * @brief FlvTagHeader³¤¶È
+	 * @brief FlvTagHeaderé•¿åº¦
 	*/
 	const static int FLV_TAG_HEADER_LENGTH = 15;
 
@@ -104,47 +104,47 @@ public:
 	~FlvTag();
 
 	/**
-	 * @brief »ñÈ¡±¾Êı¾İ°ü Í·Êı¾İ²¿·Ö±êÊ¶µÄµÄdata_³¤¶È
-	 * @return 
+	 * @brief è·å–æœ¬æ•°æ®åŒ… å¤´æ•°æ®éƒ¨åˆ†æ ‡è¯†çš„çš„data_é•¿åº¦
+	 * @return
 	*/
 	uint32_t GetDataSize() const;
 
 	/**
-	 * @brief »ñÈ¡ÉÏÒ»¸öÊı¾İ°üµÄ³¤¶È ÆäÖĞ²»°üº¬previous_tag_sizeµÄËÄ¸ö×Ö½Ú °üº¬DataSize
-	 * @return 
+	 * @brief è·å–ä¸Šä¸€ä¸ªæ•°æ®åŒ…çš„é•¿åº¦ å…¶ä¸­ä¸åŒ…å«previous_tag_sizeçš„å››ä¸ªå­—èŠ‚ åŒ…å«DataSize
+	 * @return
 	*/
 	uint32_t GetPreviousTagSize() const;
 
 	/**
-	 * @brief ×÷ÓÃÀàËÆGetPreviousTagSize ²»¹ıÎª»ñÈ¡µÄµ±Ç°Êı¾İ°üµÄÊı¾İ°ü³¤¶È ÓÃÓÚ½øĞĞĞ£Ñé
-	 * @return 
+	 * @brief ä½œç”¨ç±»ä¼¼GetPreviousTagSize ä¸è¿‡ä¸ºè·å–çš„å½“å‰æ•°æ®åŒ…çš„æ•°æ®åŒ…é•¿åº¦ ç”¨äºè¿›è¡Œæ ¡éªŒ
+	 * @return
 	*/
 	uint32_t GetTagSize() const;
 
 	/**
-	 * @brief »ñÈ¡ÏÖÔÚÒÑ¾­±£´æµÄµÄdata_³¤¶È
-	 * @return 
+	 * @brief è·å–ç°åœ¨å·²ç»ä¿å­˜çš„çš„data_é•¿åº¦
+	 * @return
 	*/
 	uint32_t GetCurrentDataSize() const;
 
 	/**
-	 * @brief »ñÈ¡È±ÉÙµÄdata×Ö½ÚÊı
-	 * @return 
+	 * @brief è·å–ç¼ºå°‘çš„dataå­—èŠ‚æ•°
+	 * @return
 	*/
 	uint32_t GetRemainDataSize() const;
 
 	/**
-	 * @brief ×·¼ÓdataÊı¾İ
-	 * @param data dataÖ¸Õë
-	 * @param length ×·¼ÓµÄ³¤¶È
+	 * @brief è¿½åŠ dataæ•°æ®
+	 * @param data dataæŒ‡é’ˆ
+	 * @param length è¿½åŠ çš„é•¿åº¦
 	*/
 	void AppendData(const char* data, size_t length);
 
 	/**
-	 * @brief ´ÓÊı¾İÁ÷ÖĞ½âÎö³öFlvTagµÄHeader²¿·Ö
-	 * @param data Êı¾İÁ÷
-	 * @param length Êı¾İÁ÷³¤¶È
-	 * @return ³É¹¦·µ»Ø½âÎö³¤¶È ½âÎö´íÎó·µ»Ø-1 Êı¾İ³¤¶È²»¹»·µ»Ø0
+	 * @brief ä»æ•°æ®æµä¸­è§£æå‡ºFlvTagçš„Headeréƒ¨åˆ†
+	 * @param data æ•°æ®æµ
+	 * @param length æ•°æ®æµé•¿åº¦
+	 * @return æˆåŠŸè¿”å›è§£æé•¿åº¦ è§£æé”™è¯¯è¿”å›-1 æ•°æ®é•¿åº¦ä¸å¤Ÿè¿”å›0
 	*/
 	ssize_t DecodeTagHander(const char* data, size_t length);
 
@@ -162,9 +162,9 @@ public:
 	void SetPreviousTagSize(uint32_t previous_tag_size);
 
 private:
-	//uint32_t previous_tag_size_; // ²»º¬previous_tag_size  sizeof ÉÏÒ»¸öTag - 4  ´ó¶ËĞò±£´æ
-	//uint8_t tag_type_; // ÒôÆµ 8 ÊÓÆµ 9 scripts 18
-	//uint8_t data_size_[3]; // AudioTag VideoTag µÄÊı¾İ³¤¶È ´Óstream_idºó¿ªÊ¼ËãÆğ
+	//uint32_t previous_tag_size_; // ä¸å«previous_tag_size  sizeof ä¸Šä¸€ä¸ªTag - 4  å¤§ç«¯åºä¿å­˜
+	//uint8_t tag_type_; // éŸ³é¢‘ 8 è§†é¢‘ 9 scripts 18
+	//uint8_t data_size_[3]; // AudioTag VideoTag çš„æ•°æ®é•¿åº¦ ä»stream_idåå¼€å§‹ç®—èµ·
 	//uint8_t timestamp_[3];
 	//uint8_t timestamp_extend_;
 	//uint8_t stream_id_[3]; // 0
@@ -181,13 +181,13 @@ private:
 	const static int TIMESTAMP_LENGTH = 3;
 	const static int STREAM_ID_LENGTH = 3;
 
-	/* ÓÉÓÚheader»á½øĞĞ¶à´Î¿½±´ ËùÒÔÎªÁË¼õÉÙ¿½±´´ÎÊı Ö±½Ó±£´æĞòÁĞ»¯ºóµÄ½á¹û*/
+	/* ç”±äºheaderä¼šè¿›è¡Œå¤šæ¬¡æ‹·è´ æ‰€ä»¥ä¸ºäº†å‡å°‘æ‹·è´æ¬¡æ•° ç›´æ¥ä¿å­˜åºåˆ—åŒ–åçš„ç»“æœ*/
 	char header_[15];
 	FlvTagBody body_;
 };
 
 /**
- * @brief Flv½âÂëÆ÷ ÔÚFlvTagºÍFlvHeader»ù´¡ÉÏ½øĞĞ°ü×° Ìá¹©½âÎö¹¦ÄÜ
+ * @brief Flvè§£ç å™¨ åœ¨FlvTagå’ŒFlvHeaderåŸºç¡€ä¸Šè¿›è¡ŒåŒ…è£… æä¾›è§£æåŠŸèƒ½
 */
 class FlvCodec
 {

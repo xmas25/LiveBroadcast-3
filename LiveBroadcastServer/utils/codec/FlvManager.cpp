@@ -1,25 +1,25 @@
 #include <cstdio>
 #include <cassert>
-#include "server/FlvManager.h"
+#include "utils/codec/FlvManager.h"
 
 FlvManager::FlvManager() :
-	FlvManager("")
+		FlvManager("")
 {
 }
 
 FlvManager::FlvManager(const std::string& file) :
-	codec_(),
-	file_(file),
-	flv_header_(),
-	video_audio_tags({}),
-	current_tag_(nullptr),
-	last_tag_(nullptr),
-	flv_tags_(),
-	parse_status_(FlvManager::TAG_HEADER),
-	parsed_length_(0),
-	buffer_(BUFFER_SIZE)
+		codec_(),
+		file_(file),
+		flv_header_(),
+		video_audio_tags(),
+		current_tag_(nullptr),
+		last_tag_(nullptr),
+		flv_tags_(),
+		parse_status_(FlvManager::TAG_HEADER),
+		parsed_length_(0),
+		buffer_(BUFFER_SIZE)
 {
-	
+
 }
 
 FlvManager::~FlvManager()
@@ -35,14 +35,14 @@ bool FlvManager::SetFilePath(const std::string& file)
 
 ssize_t FlvManager::ParseFile(size_t parse_length)
 {
-	/* ¿ÉÒÔÉèÖÃÖ¸¶¨µÄ½âÎö³¤¶È µ«×î´óÎªÎÄ¼ş³¤¶È -4 Flv×îºóËÄ¸ö×Ö½ÚÓÃÓÚĞ£Ñé*/
+	/* å¯ä»¥è®¾ç½®æŒ‡å®šçš„è§£æé•¿åº¦ ä½†æœ€å¤§ä¸ºæ–‡ä»¶é•¿åº¦ -4 Flvæœ€åå››ä¸ªå­—èŠ‚ç”¨äºæ ¡éªŒ*/
 	parse_length = file_.GetFileSize() > parse_length ? parse_length :
-		file_.GetFileSize() - 4;
+				   file_.GetFileSize() - 4;
 
 
 	ReadDataFromFile();
 
-	/* Ê×ÏÈ´ÓÊı¾İÁ÷½âÎö³ö Header ScriptºÍÒôÊÓÆµTag*/
+	/* é¦–å…ˆä»æ•°æ®æµè§£æå‡º Header Scriptå’ŒéŸ³è§†é¢‘Tag*/
 	ssize_t parsed = ParseHeader();
 	if (parsed < 0)
 	{
@@ -69,7 +69,7 @@ ssize_t FlvManager::ParseFile(size_t parse_length)
 
 	current_tag_ = new FlvTag;
 
-	/* ¿ªÊ¼½âÎö´æ´¢ÉùÒôºÍÊÓÆµµÄTag*/
+	/* å¼€å§‹è§£æå­˜å‚¨å£°éŸ³å’Œè§†é¢‘çš„Tag*/
 	bool parsing = true;
 	while (parsing && parsed_length_ < parse_length)
 	{
@@ -88,7 +88,7 @@ ssize_t FlvManager::ParseFile(size_t parse_length)
 				continue;
 			}
 
-			/* ³É¹¦½âÎöÒ»¸öTagHeader²¿·Öºó ½øĞĞĞ£Ñé*/
+			/* æˆåŠŸè§£æä¸€ä¸ªTagHeaderéƒ¨åˆ†å è¿›è¡Œæ ¡éªŒ*/
 			if (!CheckTag())
 			{
 				parsing = false;
@@ -138,21 +138,21 @@ void FlvManager::PushBackFlvTagAndSetPreviousSize(FlvTag* flv_tag)
 	{
 		flv_tag->SetPreviousTagSize(0);
 	}
-	else 
-	{	
+	else
+	{
 		flv_tag->SetPreviousTagSize(last_tag_->GetTagSize()
 		);
 	}
 	flv_tags_.push_back(flv_tag);
 
 	last_tag_ = flv_tag;
-	
+
 }
 
 ssize_t FlvManager::EncodeHeadersToBuffer(Buffer* buffer)
 {
 	uint32_t data_length = FlvHeader::FLV_HEADER_LENGTH + script_tag_.GetTagSize() + 4
-		+ video_audio_tags[0].GetTagSize() + 4 + video_audio_tags[1].GetTagSize() + 4;
+						   + video_audio_tags[0].GetTagSize() + 4 + video_audio_tags[1].GetTagSize() + 4;
 
 	if (buffer->WritableLength() < data_length)
 	{
@@ -252,7 +252,7 @@ ssize_t FlvManager::ParseVideoAudio()
 		}
 		sum_parsed += parsed;
 	}
-	
+
 
 	return sum_parsed;
 }
@@ -311,7 +311,7 @@ bool FlvManager::CheckTag()
 		return true;
 	}
 
-	/* FlvÎÄ¼şÖĞ previous_tag_sizeÎªÉÏÒ»¸öTagµÄ³¤¶È ÓÃÓÚĞ£Ñé ÏàµÈÔòÕıÈ· ·ñÔòĞ£ÑéÊ§°Ü*/
+	/* Flvæ–‡ä»¶ä¸­ previous_tag_sizeä¸ºä¸Šä¸€ä¸ªTagçš„é•¿åº¦ ç”¨äºæ ¡éªŒ ç›¸ç­‰åˆ™æ­£ç¡® å¦åˆ™æ ¡éªŒå¤±è´¥*/
 
 	uint32_t tag_size = last_tag_->GetTagSize();
 	uint32_t previous_tag_size = current_tag_->GetPreviousTagSize();
@@ -319,10 +319,10 @@ bool FlvManager::CheckTag()
 	if (tag_size != previous_tag_size)
 	{
 		printf("check : tag_size-%d, previous_tag_size-%d\n", tag_size,
-			previous_tag_size);
+				previous_tag_size);
 
 		return false;
 	}
-	
+
 	return true;
 }

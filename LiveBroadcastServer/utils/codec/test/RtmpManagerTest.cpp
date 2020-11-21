@@ -1,13 +1,9 @@
-#include <server/RtmpManager.h>
+#include <utils/codec/RtmpManager.h>
 #include <cassert>
 
 int main()
 {
-	/**
-	 * ½âÎöRtmpÊı¾İÁ÷²âÊÔ
-	 * 
-	 * 1.data ÊÇÍêÕû±£´æµÄrtmpÊı¾İÁ÷
-	*/
+	/* rtmpæ•°æ®æµ*/
 	File file("/root/server/1.data");
 
 	RtmpManager manager;
@@ -20,12 +16,9 @@ int main()
 		file.Read(&buffer);
 		result = manager.ParseData(&buffer);
 	}
-	
+
 	printf("sum_read: %zu, sum_write: %zu\n", buffer.GetSumRead(), buffer.GetSumWrite());
 
-	/**
-	* Ğ´ÈëÎÄ¼ş²âÊÔ
-	*/
 	buffer.Reset();
 
 	FlvManager* flv_manager = manager.GetFlvManager();

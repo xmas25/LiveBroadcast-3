@@ -1,4 +1,4 @@
-#include <server/FlvManager.h>
+#include <utils/codec/FlvManager.h>
 #include <iostream>
 
 std::string file = "/root/server/1.flv";

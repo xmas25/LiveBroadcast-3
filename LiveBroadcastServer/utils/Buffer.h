@@ -8,7 +8,7 @@ constexpr int DEFAULT_BUFFER_SIZE = 4096;
 constexpr int IDX_BEGIN = 8;
 
 /**
- * Í¨ÓÃ»º³åÇøÀà
+ * é€šç”¨ç¼“å†²åŒº
 */
 class Buffer
 {

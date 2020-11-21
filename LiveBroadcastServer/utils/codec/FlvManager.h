@@ -3,17 +3,17 @@
 
 #include <vector>
 
-#include "server/codec/FlvCodec.h"
+#include "utils/codec/FlvCodec.h"
 #include "utils/File.h"
 #include "utils/Buffer.h"
 
 /**
- * ´ÓFlvÎÄ¼şÖĞ½âÎö³öÊı¾İ
- * ÓÃÓÚ¹ÜÀíFlvHeaderºÍFlvTagÊı¾İ
+ * ä»Flvæ–‡ä»¶ä¸­è§£æå‡ºæ•°æ®
+ * ç”¨äºç®¡ç†FlvHeaderå’ŒFlvTagæ•°æ®
 */
 
 /**
- * @brief ÎÄ¼ş¶ÁÈ¡»º³åÇø³¤¶È
+ * @brief æ–‡ä»¶è¯»å–ç¼“å†²åŒºé•¿åº¦
 */
 constexpr size_t BUFFER_SIZE = 30000;
 class FlvManager
@@ -32,21 +32,21 @@ public:
 	bool SetFilePath(const std::string& file);
 
 	/**
-	 * @brief ½âÎöÎÄ¼ş
-	 * @param parse_length ×î´ó½âÎö³¤¶È
-	 * @return ÒÑ½âÎö³¤¶È -1³ö´í ·ñÔò·µ»Ø½âÎö³¤¶È
+	 * @brief è§£ææ–‡ä»¶
+	 * @param parse_length æœ€å¤§è§£æé•¿åº¦
+	 * @return å·²è§£æé•¿åº¦ -1å‡ºé”™ å¦åˆ™è¿”å›è§£æé•¿åº¦
 	*/
 	ssize_t ParseFile(size_t parse_length);
-	
+
 	/**
-	 * @brief »ñÈ¡ScriptTagµÄÖ¸Õë
-	 * @return 
+	 * @brief è·å–ScriptTagçš„æŒ‡é’ˆ
+	 * @return
 	*/
 	FlvTag* GetScriptTag();
 
 	/**
-	 * @brief video_audio_tags Ö¸Õë
-	 * @return 
+	 * @brief video_audio_tags æŒ‡é’ˆ
+	 * @return
 	*/
 	FlvTag* GetVideoAudioTags();
 
@@ -54,11 +54,11 @@ public:
 
 
 	/**
-	 * TODO ½øĞĞ»º´æ
-	 * @brief ½«FlvHeader script_tag_ ºÍµÚÒ»¸öÒôÆµÒÔ¼°Ò»¸öÊÓÆµĞÅÏ¢±àÂëµ½»º³åÇøÖĞ
-	 * ¼´Ê¹±àÂë³É¹¦Ò²²»Çå³ıÉÏÊöËÄÕßÄÚÈİ ·½±ã¼ÌĞøÊ¹ÓÃ
-	 * @param buffer 
-	 * @return ³É¹¦·µ»ØĞòÁĞ»¯µÄ×Ö½ÚÊı Ê§°Ü·µ»Ø-1 »º³åÇø³¤¶È²»×ã·µ»Ø0
+	 * TODO è¿›è¡Œç¼“å­˜
+	 * @brief å°†FlvHeader script_tag_ å’Œç¬¬ä¸€ä¸ªéŸ³é¢‘ä»¥åŠä¸€ä¸ªè§†é¢‘ä¿¡æ¯ç¼–ç åˆ°ç¼“å†²åŒºä¸­
+	 * å³ä½¿ç¼–ç æˆåŠŸä¹Ÿä¸æ¸…é™¤ä¸Šè¿°å››è€…å†…å®¹ æ–¹ä¾¿ç»§ç»­ä½¿ç”¨
+	 * @param buffer
+	 * @return æˆåŠŸè¿”å›åºåˆ—åŒ–çš„å­—èŠ‚æ•° å¤±è´¥è¿”å›-1 ç¼“å†²åŒºé•¿åº¦ä¸è¶³è¿”å›0
 	*/
 	ssize_t EncodeHeadersToBuffer(Buffer* buffer);
 
@@ -69,27 +69,27 @@ private:
 
 	File file_;
 
-	/* Ã¿¸öFlvÎÄ¼şÓĞÇÒ½öÓĞÒ»¸ö*/
+	/* æ¯ä¸ªFlvæ–‡ä»¶æœ‰ä¸”ä»…æœ‰ä¸€ä¸ª*/
 	FlvHeader flv_header_;
 
 	FlvTag script_tag_;
 
-	/* µÚÒ»¸öÒôÆµºÍÊÓÆµtag´æ´¢×Å±àÂëĞÅÏ¢ ¾­³£Ê¹ÓÃĞèÒª¶ÀÁ¢´æ´¢*/
+	/* ç¬¬ä¸€ä¸ªéŸ³é¢‘å’Œè§†é¢‘tagå­˜å‚¨ç€ç¼–ç ä¿¡æ¯ ç»å¸¸ä½¿ç”¨éœ€è¦ç‹¬ç«‹å­˜å‚¨*/
 	FlvTag video_audio_tags[2];
 
-	/* µ±Ç°ÕıÔÚ´¦ÀíµÄtag*/
+	/* å½“å‰æ­£åœ¨å¤„ç†çš„tag*/
 	FlvTag* current_tag_;
 
-	/* ÉÏÒ»¸ö´¦Àí¹ıµÄtag*/
+	/* ä¸Šä¸€ä¸ªå¤„ç†è¿‡çš„tag*/
 	FlvTag* last_tag_;
 
-	/* tag¼¯ºÏ*/
+	/* tagé›†åˆ*/
 	std::vector<FlvTag*> flv_tags_;
 
 
 	ParseStatus parse_status_;
 
-	/* ÒÑ¾­½âÎöµÄ³¤¶È*/
+	/* å·²ç»è§£æçš„é•¿åº¦*/
 	size_t parsed_length_;
 
 	Buffer buffer_;
