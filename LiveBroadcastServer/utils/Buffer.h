@@ -4,6 +4,8 @@
 #include <vector>
 #include <string>
 
+#include "base/Platform.h"
+
 constexpr int DEFAULT_BUFFER_SIZE = 4096;
 constexpr int IDX_BEGIN = 8;
 
@@ -37,6 +39,20 @@ public:
 	size_t AppendData(const char* data, size_t length);
 
 	size_t AppendData(const std::string* data);
+
+	/**
+	 * 从sockfd中读取数据并保存到Buffer中
+	 * @param sockfd
+	 * @return -1 出错 0 结束 大于0为读取的长度
+	 */
+	ssize_t ReadFromSockfd(SOCKET sockfd);
+
+	/**
+	 * 从sockfd中读取数据并丢弃
+	 * @param sockfd
+	 * @return 丢弃的数据长度
+	 */
+	ssize_t ReadFromSockfdAndDrop(SOCKET sockfd);
 private:
 
 	std::vector<char> buffer_;

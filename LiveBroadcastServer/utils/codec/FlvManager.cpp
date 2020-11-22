@@ -24,6 +24,10 @@ FlvManager::FlvManager(const std::string& file) :
 
 FlvManager::~FlvManager()
 {
+	for (FlvTag* tag : flv_tags_)
+	{
+		delete tag;
+	}
 }
 
 bool FlvManager::SetFilePath(const std::string& file)

@@ -51,8 +51,11 @@ public:
 
 	ssize_t Write(const char* buffer, size_t length);
 
+	ssize_t Write(Buffer* buffer);
+
 	size_t GetFileSize();
 
+	const std::string& GetPath() const;
 private:
 	std::string path_;
 

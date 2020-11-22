@@ -230,9 +230,9 @@ ssize_t RtmpManager::ParseBody(Buffer* buffer)
 	uint8_t csid = rtmp_pack_.GetCsid();
 	if (csid != MOVIE_CSID)
 	{
-		if (csid == 3 && rtmp_pack_.GetDataSize() == 31)
+		if (csid == 3)
 		{
-			printf("parse maybe success!\n");
+			printf("control message, parse maybe success!\n");
 			return -1;
 		}
 		else

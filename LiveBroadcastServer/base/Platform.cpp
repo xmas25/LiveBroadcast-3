@@ -3,7 +3,7 @@
 //
 
 #ifdef _WIN32
-#include "network/Platform.h"
+#include "Platform.h"
 
 NetworkInitializer::NetworkInitializer()
 {

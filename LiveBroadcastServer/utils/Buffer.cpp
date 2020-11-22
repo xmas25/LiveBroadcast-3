@@ -99,3 +99,22 @@ size_t Buffer::AppendData(const std::string* data)
 	}
 	return AppendData(data->data(), data->length());
 }
+
+ssize_t Buffer::ReadFromSockfd(SOCKET sockfd)
+{
+	AdjustBuffer();
+	ssize_t result = recv(sockfd, WriteBegin(), WritableLength(), 0);
+	if (result <= 0)
+	{
+		return result;
+	}
+	AddWriteIndex(result);
+	return result;
+}
+
+ssize_t Buffer::ReadFromSockfdAndDrop(SOCKET sockfd)
+{
+	AdjustBuffer();
+	ssize_t result = recv(sockfd, WriteBegin(), WritableLength(), 0);
+	return result;
+}

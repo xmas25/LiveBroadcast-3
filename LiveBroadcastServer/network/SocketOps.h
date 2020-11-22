@@ -1,7 +1,7 @@
 #ifndef NETWORK_SOCKETOPS
 #define NETWORK_SOCKETOPS
 
-#include "network/Platform.h"
+#include "base/Platform.h"
 
 namespace socketops
 {

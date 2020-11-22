@@ -18,6 +18,7 @@ set(NETWORK_SRCS
 		network/SocketOps.cpp
 		network/multiplexing/Epoll.cpp
 		network/multiplexing/MultiplexingBase.cpp
+		network/multiplexing/Select.cpp
 		)
 
 set(NETWORK_HEADERS
@@ -31,10 +32,10 @@ set(NETWORK_HEADERS
 		network/InetAddress.h
 		network/SocketOps.h
 		network/Callback.h
-		network/Platform.h
 		network/multiplexing/Epoll.h
 		network/multiplexing/MultiplexingBase.h
-		network/multiplexing/Select.cpp network/multiplexing/Select.h network/Platform.cpp)
+		network/multiplexing/Select.h
+		)
 
 set(UTILS_SRCS
 		utils/codec/FlvManager.cpp
@@ -54,9 +55,20 @@ set(UTILS_HEADERS
 		utils/File.h
 )
 
-add_executable(RtmpManagerTest "utils/codec/test/RtmpManagerTest.cpp" ${UTILS_SRCS} ${UTILS_HEADERS})
+set(BASE_SRCS
+		base/Platform.cpp
+)
 
-add_executable(main "main.cpp" ${NETWORK_SRCS} ${NETWORK_HEADERS} ${UTILS_SRCS} ${UTILS_HEADERS})
+set(BASE_HEADERS
+		base/Platform.h
+)
+
+# 后续会修改为模块化 因为过早模块化 会导致每次修改代码后需要rebuild才能更新 故临时使用这种方式
+
+add_executable(RtmpManagerTest "utils/codec/test/RtmpManagerTest.cpp" ${UTILS_SRCS} ${UTILS_HEADERS} ${BASE_SRCS} ${BASE_HEADERS})
+
+add_executable(main main.cpp ${NETWORK_SRCS} ${NETWORK_HEADERS} ${UTILS_SRCS} ${UTILS_HEADERS} ${BASE_SRCS} ${BASE_HEADERS})
+
 if(WIN32)
 	target_link_libraries(main ws2_32)
 endif()

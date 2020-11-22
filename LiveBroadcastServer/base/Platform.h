@@ -33,7 +33,7 @@ enum EVENTS
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <string>
-#include <Windows.h>
+#include <windows.h>
 
 class NetworkInitializer
 {

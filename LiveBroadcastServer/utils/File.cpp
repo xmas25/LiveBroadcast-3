@@ -87,6 +87,21 @@ ssize_t File::Write(const char* buffer, size_t length)
 	return result;
 }
 
+ssize_t File::Write(Buffer* buffer)
+{
+	if (!buffer)
+	{
+		return -1;
+	}
+	ssize_t result = Write(buffer->ReadBegin(), buffer->ReadableLength());
+	if (result <= 0)
+	{
+		return result;
+	}
+	buffer->AddReadIndex(result);
+	return result;
+}
+
 size_t File::GetFileSize()
 {
 	if (stat_.st_size == 0)
@@ -118,4 +133,9 @@ std::string File::OpenModeToString(OpenMode openmode)
 		break;
 	}
 	return mode;
+}
+
+const std::string& File::GetPath() const
+{
+	return path_;
 }

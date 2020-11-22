@@ -1,7 +1,7 @@
 #ifndef NETWORK_CHANNEL
 #define NETWORK_CHANNEL
 
-#include "network/Platform.h"
+#include "base/Platform.h"
 #include "network/Callback.h"
 
 class EventLoop;
