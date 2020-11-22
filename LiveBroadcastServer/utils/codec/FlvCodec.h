@@ -153,7 +153,7 @@ public:
 
 	void SetTagType(uint8_t tag_type);
 
-	void SetDataSize(uint8_t* data_size);
+	void SetDataSize(const uint8_t* data_size);
 
 	void SetTimeStamp(uint8_t* timestamp);
 

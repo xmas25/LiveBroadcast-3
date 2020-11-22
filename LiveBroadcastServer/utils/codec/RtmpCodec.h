@@ -73,20 +73,17 @@ public:
 
 	ssize_t DecodeHeader(const char* data, size_t length);
 
-	/**
-	 * @brief 将RtmpPack的头部部分 转换到 FlvTag的头部
-	 * @param flv_tag
-	 * @return
-	*/
-	bool EncodeHeaderToFlvTag(FlvTag* flv_tag);
-
 	RtmpPackType GetRtmpPackType() const;
 
 	uint32_t GetDataSize() const;
 
+	const uint8_t* GetDataSizePtr() const;
+
 	RtmpPackFmt GetFmt() const;
 
 	uint8_t GetCsid() const;
+
+	const uint8_t* GetTimeStamp() const;
 
 private:
 
@@ -115,7 +112,7 @@ class RtmpCodec
 {
 public:
 
-	RtmpCodec() = default;
+	RtmpCodec();
 	~RtmpCodec() = default;
 
 	/**
@@ -127,8 +124,24 @@ public:
 	*/
 	ssize_t DecodeHeader(const char* data, size_t length, RtmpPack* rtmp_pack_);
 
+	/**
+	 * @brief 将RtmpPack的头部部分 转换到 FlvTag的头部
+	 * @return
+	*/
+	bool EncodeHeaderToFlvTag(RtmpPack* rtmp_pack_, FlvTag* flv_tag);
+
+	void AddTimeStamp(const uint8_t* timestamp);
 private:
 
+	/**
+	 * 注意Rtmp包时间戳是相对上一个包的时间戳
+	 * 而Flv文件的是第一个FlvTag的时间戳 故需要累加统计
+	*/
+	union
+	{
+		uint32_t timestamp_;
+		uint8_t ts_[4];
+	};
 };
 
 #endif // !UTILS_CODEC_RTMPCODEC_H

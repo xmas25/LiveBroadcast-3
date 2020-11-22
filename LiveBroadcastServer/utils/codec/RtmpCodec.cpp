@@ -16,6 +16,36 @@ ssize_t RtmpCodec::DecodeHeader(const char* data, size_t length, RtmpPack* rtmp_
 	return rtmp_pack_->DecodeHeader(data, length);
 }
 
+bool RtmpCodec::EncodeHeaderToFlvTag(RtmpPack* rtmp_pack_, FlvTag* flv_tag)
+{
+	if (!flv_tag)
+	{
+		return false;
+	}
+
+	flv_tag->SetTagType(static_cast<uint8_t>(rtmp_pack_->GetRtmpPackType()));
+	flv_tag->SetDataSize(rtmp_pack_->GetDataSizePtr());
+
+	AddTimeStamp(rtmp_pack_->GetTimeStamp());
+	uint8_t ts[3] = {ts_[2], ts_[1], ts_[0]};
+	flv_tag->SetTimeStamp(ts);
+
+	return true;
+}
+
+RtmpCodec::RtmpCodec() :
+	timestamp_(0)
+{
+
+}
+
+void RtmpCodec::AddTimeStamp(const uint8_t* timestamp)
+{
+	timestamp_ += timestamp[2];
+	timestamp_ += timestamp[1] * 256;
+	timestamp_ += timestamp[0] * 65536;
+}
+
 ssize_t RtmpPack::DecodeHeader(const char* data, size_t length)
 {
 	uint8_t fmt = (uint8_t)data[0] >> 6;
@@ -59,20 +89,6 @@ ssize_t RtmpPack::DecodeHeader(const char* data, size_t length)
 	{
 		return result + 1;// 2b fmt and 6b csid_
 	}
-}
-
-bool RtmpPack::EncodeHeaderToFlvTag(FlvTag* flv_tag)
-{
-	if (!flv_tag)
-	{
-		return false;
-	}
-
-	flv_tag->SetTagType(static_cast<uint8_t>(pack_type_));
-	flv_tag->SetDataSize(data_size_);
-	flv_tag->SetTimeStamp(timestamp_);
-
-	return true;
 }
 
 RtmpPack::RtmpPackType RtmpPack::GetRtmpPackType() const
@@ -148,6 +164,12 @@ uint32_t RtmpPack::GetDataSize() const
 	return data_size_[0] * 65536 + data_size_[1] * 256 + data_size_[2];
 }
 
+const uint8_t* RtmpPack::GetDataSizePtr() const
+{
+	return data_size_;
+}
+
+
 RtmpPack::RtmpPackFmt RtmpPack::GetFmt() const
 {
 	return fmt_;
@@ -156,4 +178,9 @@ RtmpPack::RtmpPackFmt RtmpPack::GetFmt() const
 uint8_t RtmpPack::GetCsid() const
 {
 	return csid_;
+}
+
+const uint8_t* RtmpPack::GetTimeStamp() const
+{
+	return timestamp_;
 }

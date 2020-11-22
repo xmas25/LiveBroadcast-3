@@ -114,7 +114,7 @@ void FlvTag::SetTagType(uint8_t tag_type)
 	header_[TAG_TYPE_SUB] = tag_type;
 }
 
-void FlvTag::SetDataSize(uint8_t* data_size)
+void FlvTag::SetDataSize(const uint8_t* data_size)
 {
 	memcpy(&header_[DATA_SIZE_SUB], data_size, DATA_SIZE_LENGTH);
 }

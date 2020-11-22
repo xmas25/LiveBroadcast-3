@@ -3,8 +3,8 @@
 #include <string>
 
 std::string ROOT = R"(C:\Users\rjd67\Desktop\Server\)";
-std::string DATA_FILE = ROOT + "1606025715.rtmp";
-std::string OUT_FILE = ROOT + "1606025715.rtmp.flv";
+std::string DATA_FILE = ROOT + "1606023960.rtmp";
+std::string OUT_FILE = ROOT + "1606023960.rtmp.flv";
 
 int main()
 {
@@ -42,11 +42,6 @@ int main()
 	ssize_t write_bytes;
 	for (FlvTag* tag : *flv_tags)
 	{
-		if (tag->GetTagType() != 9)
-		{
-			continue;
-		}
-
 		write_bytes = file_write.Write(tag->GetHeader(), FlvTag::FLV_TAG_HEADER_LENGTH);
 		assert(write_bytes == FlvTag::FLV_TAG_HEADER_LENGTH);
 

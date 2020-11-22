@@ -142,7 +142,7 @@ ssize_t RtmpManager::ParseScriptPack(Buffer* buffer)
 	/*
 	将rtmp_pack的header部分编码到FlvTag中 然后从buffer拷贝data到FlvTag中减少拷贝次数
 	*/
-	rtmp_pack_.EncodeHeaderToFlvTag(script_tag);
+	rtmp_codec_.EncodeHeaderToFlvTag(&rtmp_pack_, script_tag);
 	script_tag->AppendData(buffer->ReadBegin(), script_tag->GetDataSize());
 	buffer->AddReadIndex(script_tag->GetDataSize());
 	result += script_tag->GetDataSize();
@@ -178,7 +178,7 @@ ssize_t RtmpManager::ParseVideoAudio(Buffer* buffer)
 		if (rtmp_pack_.GetRtmpPackType() == RtmpPack::RTMP_AUDIO ||
 			rtmp_pack_.GetRtmpPackType() == RtmpPack::RTMP_VIDEO)
 		{
-			rtmp_pack_.EncodeHeaderToFlvTag(&tag[i]);
+			rtmp_codec_.EncodeHeaderToFlvTag(&rtmp_pack_, &tag[i]);
 			tag[i].AppendData(buffer->ReadBegin(), tag[i].GetDataSize());
 			buffer->AddReadIndex(rtmp_pack_.GetDataSize());
 			result += rtmp_pack_.GetDataSize();
@@ -213,7 +213,7 @@ ssize_t RtmpManager::ParseHeader(Buffer* buffer)
 	if (chunk_over_)
 	{
 		current_tag_ = new FlvTag;
-		rtmp_pack_.EncodeHeaderToFlvTag(current_tag_);
+		rtmp_codec_.EncodeHeaderToFlvTag(&rtmp_pack_, current_tag_);
 	}
 
 
