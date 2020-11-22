@@ -1,7 +1,7 @@
 #include "network/Acceptor.h"
 #include "network/SocketOps.h"
 
-void DefaultNewConnection(int fd, const InetAddress& address)
+void DefaultNewConnection(SOCKET fd, const InetAddress& address)
 {
 	
 }
@@ -34,19 +34,20 @@ void Acceptor::SetNewConnectionCallback(const NewConnectionCallback& cb)
 	newconnection_callback_ = cb;
 }
 
-int Acceptor::Accept(InetAddress* address)
+SOCKET Acceptor::Accept(InetAddress* address)
 {
 	if (!address)
 	{
 		return -1;
 	}
+
 	return listenfd_.Accept(address);
 }
 
 void Acceptor::OnReadable()
 {
 	InetAddress address;
-	int fd = Accept(&address);
+	SOCKET fd = Accept(&address);
 
 	if (newconnection_callback_)
 	{

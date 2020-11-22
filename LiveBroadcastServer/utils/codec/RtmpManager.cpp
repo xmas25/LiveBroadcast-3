@@ -22,6 +22,11 @@ ssize_t RtmpManager::ParseData(Buffer* buffer)
 		return -1;
 	}
 
+	if (buffer->ReadableLength() == 0)
+	{
+		return 0;
+	}
+
 	ssize_t current_loop_parsed = 0;
 	ssize_t parsed = 0;
 

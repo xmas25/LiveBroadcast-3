@@ -19,11 +19,28 @@ public:
 	};
 
 	File();
+
+	/**
+	 * 打开指定文件 默认只读模式
+	 * @param file 文件完整路径
+	 */
 	File(const std::string& file);
+
+	/**
+	 * 打开指定文件
+	 * @param file 文件完整路径
+	 * @param openmode 打开模式
+	 */
 	File(const std::string& file, OpenMode openmode);
 
 	~File();
 
+	/**
+	 * 按指定模式 打开指定文件
+	 * @param file
+	 * @param openmode
+	 * @return  存在打开的文件则返回false
+	 */
 	bool Open(const std::string& file, OpenMode openmode = O_RDONLY);
 
 	void Close();

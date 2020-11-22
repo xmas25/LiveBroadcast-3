@@ -161,6 +161,8 @@ public:
 
 	void SetPreviousTagSize(uint32_t previous_tag_size);
 
+	uint8_t GetTagType() const;
+
 private:
 	//uint32_t previous_tag_size_; // 不含previous_tag_size  sizeof 上一个Tag - 4  大端序保存
 	//uint8_t tag_type_; // 音频 8 视频 9 scripts 18

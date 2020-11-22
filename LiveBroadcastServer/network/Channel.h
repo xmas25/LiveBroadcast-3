@@ -1,6 +1,7 @@
 #ifndef NETWORK_CHANNEL
 #define NETWORK_CHANNEL
 
+#include "network/Platform.h"
 #include "network/Callback.h"
 
 class EventLoop;
@@ -14,7 +15,7 @@ public:
 		CHANNEL_STATUS_DEL
 	};
 
-	Channel(EventLoop* loop, int sockfd);
+	Channel(EventLoop* loop, SOCKET sockfd);
 
 	void SetEvent(uint32_t ev);
 	uint32_t GetEpollEvent() const;
@@ -22,7 +23,7 @@ public:
 	ChannelStatus GetChannelStatus() const;
 	void SetChannelStatus(ChannelStatus channel_status);
 
-	int GetSockFd() const;
+	SOCKET GetSockFd() const;
 
 	void HandleEvent();
 
@@ -33,7 +34,7 @@ public:
 private:
 	EventLoop* loop_;
 
-	int fd_;
+	SOCKET fd_;
 	ChannelStatus channel_status_;
 	uint32_t event_;
 	uint32_t ep_event_;

@@ -1,24 +1,23 @@
 #ifndef NETWORK_SOCKETOPS
 #define NETWORK_SOCKETOPS
 
-#include <arpa/inet.h>
-
+#include "network/Platform.h"
 
 namespace socketops
 {
-	int Socket(int family);
+	SOCKET Socket(int family);
 
 	int Htons(int port);
 
-	void Bind(int sockfd, const sockaddr& address);
+	void Bind(SOCKET sockfd, const sockaddr& address);
 
-	void Listen(int sockfd);
+	void Listen(SOCKET sockfd);
 
-	void SetReusePort(int sockfd);
+	void SetReusePort(SOCKET sockfd);
 
-	void SetReuseAddr(int sockfd);
+	void SetReuseAddr(SOCKET sockfd);
 
-	int Accept(int sockfd, struct sockaddr* address);
+	SOCKET Accept(SOCKET sockfd, struct sockaddr* address);
 }
 
 #endif // !NETWORK_SOCKETOPS

@@ -14,7 +14,7 @@ class Buffer
 {
 public:
 	Buffer();
-	Buffer(size_t buffer_size);
+	explicit Buffer(size_t buffer_size);
 	~Buffer();
 
 	size_t ReadableLength() const;

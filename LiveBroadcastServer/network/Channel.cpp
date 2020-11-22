@@ -1,39 +1,7 @@
 #include "network/Channel.h"
 #include "network/EventLoop.h"
 
-enum EPOLL_EVENTS
-{
-    EPOLLIN = 0x001,
-#define EPOLLIN EPOLLIN
-    EPOLLPRI = 0x002,
-#define EPOLLPRI EPOLLPRI
-    EPOLLOUT = 0x004,
-#define EPOLLOUT EPOLLOUT
-    EPOLLRDNORM = 0x040,
-#define EPOLLRDNORM EPOLLRDNORM
-    EPOLLRDBAND = 0x080,
-#define EPOLLRDBAND EPOLLRDBAND
-    EPOLLWRNORM = 0x100,
-#define EPOLLWRNORM EPOLLWRNORM
-    EPOLLWRBAND = 0x200,
-#define EPOLLWRBAND EPOLLWRBAND
-    EPOLLMSG = 0x400,
-#define EPOLLMSG EPOLLMSG
-    EPOLLERR = 0x008,
-#define EPOLLERR EPOLLERR
-    EPOLLHUP = 0x010,
-#define EPOLLHUP EPOLLHUP
-    EPOLLRDHUP = 0x2000,
-#define EPOLLRDHUP EPOLLRDHUP
-    EPOLLWAKEUP = 1u << 29,
-#define EPOLLWAKEUP EPOLLWAKEUP
-    EPOLLONESHOT = 1u << 30,
-#define EPOLLONESHOT EPOLLONESHOT
-    EPOLLET = 1u << 31
-#define EPOLLET EPOLLET
-};
-
-Channel::Channel(EventLoop* loop, int fd) :
+Channel::Channel(EventLoop* loop, SOCKET fd) :
     loop_(loop),
 	fd_(fd),
 	channel_status_(CHANNEL_STATUS_NEW),
@@ -63,14 +31,14 @@ void Channel::SetChannelStatus(ChannelStatus channel_status)
 	channel_status_ = channel_status;
 }
 
-int Channel::GetSockFd() const
+SOCKET Channel::GetSockFd() const
 {
 	return fd_;
 }
 
 void Channel::HandleEvent()
 {
-	if (event_ & EPOLLIN)
+	if (event_ & XEPOLLIN)
 	{
         if (readable_callback_)
         {
@@ -86,7 +54,7 @@ void Channel::SetReadableCallback(const EventCallback& cb)
 
 void Channel::EnableReadable()
 {
-    ep_event_ |= EPOLLIN;
+    ep_event_ |= XEPOLLIN;
     Update();
 }
 

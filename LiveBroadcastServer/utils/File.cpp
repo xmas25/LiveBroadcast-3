@@ -53,7 +53,7 @@ ssize_t File::Read(char* buffer, size_t length)
 	{
 		return -1;
 	}
-	ssize_t result = fread(buffer, 1, length, file_);
+	ssize_t result = fread(buffer, sizeof (char), length, file_);
 
 	assert(result >= 0);
 
@@ -103,16 +103,16 @@ std::string File::OpenModeToString(OpenMode openmode)
 	switch (openmode)
 	{
 	case File::O_RDONLY:
-		mode = "r";
+		mode = "rb";
 		break;
 	case File::O_WRONLY:
-		mode = "w";
+		mode = "wb";
 		break;
 	case File::O_APPEND:
-		mode = "a";
+		mode = "ab";
 		break;
 	case File::O_RDWR:
-		mode = "r+";
+		mode = "rb+";
 		break;
 	default:
 		break;

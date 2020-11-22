@@ -1,4 +1,3 @@
-#include <netinet/in.h>
 #include "utils/codec/FlvCodec.h"
 
 char FlvHeader::DEFAULT_HEADER[] = { 0x46, 0x4C, 0x56, 0x01, 0x05, 0x00, 0x00, 0x00, 0x09 };
@@ -77,7 +76,10 @@ uint32_t FlvTag::GetPreviousTagSize() const
 	previous_tag_size_为大端序
 	*/
 	const uint32_t* previous_tag_size = reinterpret_cast<const uint32_t*>(&header_[PREVIOUS_TAG_SIZE_SUB]);
-	return ntohl(*previous_tag_size);
+	return previous_tag_size[0] * 0x1000000+
+			previous_tag_size[0] * 0x10000+
+			previous_tag_size[0] * 0x100+
+			previous_tag_size[0];
 }
 
 uint32_t FlvTag::GetTagSize() const
@@ -141,8 +143,18 @@ const char* FlvTag::GetHeader() const
 void FlvTag::SetPreviousTagSize(uint32_t previous_tag_size)
 {
 	// 统一使用大端序存储数据 便于统一序列化
-	previous_tag_size = htons(previous_tag_size);
-	memcpy(&header_[PREVIOUS_TAG_SIZE_SUB], &previous_tag_size, PREVIOUS_TAG_SIZE_LENGTH);
+	uint8_t* previous_tag_size_t = reinterpret_cast<uint8_t*>(&previous_tag_size);
+	uint8_t* previous_tag_size_t_ = reinterpret_cast<uint8_t*>(&header_[PREVIOUS_TAG_SIZE_SUB]);
+
+	previous_tag_size_t_[0] = previous_tag_size_t[3];
+	previous_tag_size_t_[1] = previous_tag_size_t[2];
+	previous_tag_size_t_[2] = previous_tag_size_t[1];
+	previous_tag_size_t_[3] = previous_tag_size_t[0];
+}
+
+uint8_t FlvTag::GetTagType() const
+{
+	return header_[TAG_TYPE_SUB];
 }
 
 ssize_t FlvHeader::EncodeToBuffer(char* data, size_t length)

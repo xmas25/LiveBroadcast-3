@@ -3,7 +3,7 @@
 
 #include "network/Callback.h"
 
-class Epoll;
+class MultiplexingBase;
 class Channel;
 class EventLoop
 {
@@ -18,7 +18,7 @@ public:
 
 private:
 
-	Epoll* epoll_;
+	MultiplexingBase* multiplexing_base_;
 
 	ChannelVector active_channels_;
 

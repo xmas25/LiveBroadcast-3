@@ -1,18 +1,24 @@
 #include "network/EventLoop.h"
 #include "network/Channel.h"
-#include "network/Epoll.h"
+#include "network/multiplexing/MultiplexingBase.h"
+#include "network/multiplexing/Epoll.h"
+#include "network/multiplexing/Select.h"
 
 EventLoop::EventLoop() :
-	epoll_(new Epoll()),
+	multiplexing_base_(nullptr),
 	active_channels_(),
 	looping_(false)
 {
-
+#ifdef _WIN32
+	multiplexing_base_ = new Select;
+#else
+	multiplexing_base_ = new Epoll;
+#endif
 }
 
 EventLoop::~EventLoop()
 {
-	delete epoll_;
+	delete multiplexing_base_;
 }
 
 void EventLoop::Loop()
@@ -22,7 +28,7 @@ void EventLoop::Loop()
 	while (looping_)
 	{
 		active_channels_.clear();
-		looping_ = epoll_->LoopOnce(20, &active_channels_);
+		looping_ = multiplexing_base_->LoopOnce(20, &active_channels_);
 
 		HandleActiveChannel();
 	}
@@ -30,7 +36,7 @@ void EventLoop::Loop()
 
 void EventLoop::Update(Channel* channel)
 {
-	epoll_->UpdateChannel(channel);
+	multiplexing_base_->UpdateChannel(channel);
 }
 
 void EventLoop::HandleActiveChannel()

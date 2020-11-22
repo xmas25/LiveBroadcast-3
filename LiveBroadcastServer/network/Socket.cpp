@@ -3,7 +3,7 @@
 #include "network/SocketOps.h"
 #include "network/Socket.h"
 
-Socket::Socket(int sockfd) :
+Socket::Socket(SOCKET sockfd) :
 	sockfd_(sockfd)
 {
 
@@ -18,19 +18,22 @@ Socket::~Socket()
 	}
 }
 
-int Socket::GetSockFd() const
+SOCKET Socket::GetSockFd() const
 {
 	return sockfd_;
 }
 
-void Socket::SetSockfd(int sockfd)
+void Socket::SetSockfd(SOCKET sockfd)
 {
 	sockfd_ = sockfd;
 }
 
 void Socket::SetReusePort()
 {
+#ifdef _WIN32
+#else
 	socketops::SetReusePort(sockfd_);
+#endif
 }
 
 void Socket::SetReuseAddr()
@@ -48,7 +51,7 @@ void Socket::Listen()
 	socketops::Listen(sockfd_);
 }
 
-int Socket::Accept(InetAddress* address)
+SOCKET Socket::Accept(InetAddress* address)
 {
 
 	return socketops::Accept(sockfd_, address->GetSockAddr());

@@ -3,7 +3,6 @@
 
 #include <cstdint>
 #include <string>
-#include <sys/socket.h>
 
 #include "network/Socket.h"
 #include "network/Acceptor.h"

@@ -1,10 +1,15 @@
 #include <utils/codec/RtmpManager.h>
 #include <cassert>
+#include <string>
+
+std::string ROOT = R"(C:\Users\rjd67\Desktop\Server\)";
+std::string DATA_FILE = ROOT + "1606025715.rtmp";
+std::string OUT_FILE = ROOT + "1606025715.rtmp.flv";
 
 int main()
 {
 	/* rtmp数据流*/
-	File file("/root/server/1.data");
+	File file(DATA_FILE);
 
 	RtmpManager manager;
 	Buffer buffer(8192);
@@ -13,7 +18,11 @@ int main()
 
 	while (result != -1)
 	{
-		file.Read(&buffer);
+		if (file.Read(&buffer) == 0)
+		{
+			break;
+		}
+
 		result = manager.ParseData(&buffer);
 	}
 
@@ -25,7 +34,7 @@ int main()
 
 	flv_manager->EncodeHeadersToBuffer(&buffer);
 
-	File file_write("/root/server/2.data", File::O_WRONLY);
+	File file_write(OUT_FILE, File::O_WRONLY);
 	file_write.Write(buffer.ReadBegin(), buffer.ReadableLength());
 
 	std::vector<FlvTag*>* flv_tags = flv_manager->GetFlvTags();
@@ -33,6 +42,11 @@ int main()
 	ssize_t write_bytes;
 	for (FlvTag* tag : *flv_tags)
 	{
+		if (tag->GetTagType() != 9)
+		{
+			continue;
+		}
+
 		write_bytes = file_write.Write(tag->GetHeader(), FlvTag::FLV_TAG_HEADER_LENGTH);
 		assert(write_bytes == FlvTag::FLV_TAG_HEADER_LENGTH);
 
@@ -40,9 +54,6 @@ int main()
 		write_bytes = file_write.Write(body->data(), body->length());
 		assert(write_bytes == static_cast<ssize_t>(body->length()));
 	}
-
-	int a;
-	scanf("%d", &a);
 
 	return 0;
 }

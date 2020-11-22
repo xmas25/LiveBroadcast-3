@@ -2,8 +2,8 @@
 #define NETWORK_INETADDRESS
 
 #include <cstdint>
-#include <arpa/inet.h>
 #include <string>
+#include "network/Platform.h"
 
 class InetAddress
 {

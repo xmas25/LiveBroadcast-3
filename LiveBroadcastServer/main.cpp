@@ -1,19 +1,27 @@
 ﻿// LiveBroadcastServer.cpp : Defines the entry point for the application.
 //
 #include <iostream>
+#include <unistd.h>
+#include <ctime>
+
 #include "network/TcpServer.h"
-#include "server/codec/RtmpCodec.h"
+#include "utils/codec/RtmpCodec.h"
 #include "utils/File.h"
 
-#include <unistd.h>
+#ifdef _WIN32
+NetworkInitializer init;
+#endif
 
 std::string hello_world = "hello world!";
+std::string ROOT = R"(C:\Users\rjd67\Desktop\Server\)";
+std::string FILE_PREFIX = ".rtmp";
 
-void NewConnection(int fd, const InetAddress& address)
+void NewConnection(SOCKET fd, const InetAddress& address)
 {
 	char buffer[2048];
 	
 	ssize_t read_bytes = read(fd, buffer, sizeof buffer);
+	std::cout << GetLastErrorAsString() << std::endl;
 	assert(read_bytes == 1537);
 
 	ssize_t send_bytes = write(fd, RTMP_S01, sizeof RTMP_S01);
@@ -39,8 +47,9 @@ void NewConnection(int fd, const InetAddress& address)
 	read_bytes = read(fd, buffer, sizeof buffer);
 	write(fd, RTMP_6, sizeof RTMP_6);
 
+	time_t t = time(nullptr);
 
-	File file("/root/server/1.data", File::O_WRONLY);
+	File file(ROOT + std::to_string(t) + FILE_PREFIX, File::O_WRONLY);
 	
 	while (true)
 	{

@@ -32,12 +32,12 @@ std::string InetAddress::ToIpPort()
 
 	if (addr->sa_family == AF_INET)
 	{
-		inet_ntop(AF_INET, &addr_ipv4.sin_addr, buffer, sizeof buffer);
+		// inet_ntop(AF_INET, &addr_ipv4.sin_addr, buffer, sizeof buffer);
 
 	}
 	else if (addr->sa_family == AF_INET6)
 	{
-		inet_ntop(AF_INET6, &addr_ipv6.sin6_addr, buffer, sizeof buffer);
+		// inet_ntop(AF_INET6, &addr_ipv6.sin6_addr, buffer, sizeof buffer);
 	}
 	else
 	{

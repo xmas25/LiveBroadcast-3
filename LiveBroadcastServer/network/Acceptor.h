@@ -5,7 +5,7 @@
 #include "network/Channel.h"
 #include "network/Callback.h"
 
-typedef std::function<void(int, const InetAddress&)> NewConnectionCallback;
+typedef std::function<void(SOCKET, const InetAddress&)> NewConnectionCallback;
 
 class EventLoop;
 class Acceptor
@@ -14,7 +14,7 @@ public:
 	Acceptor(EventLoop* loop, const InetAddress& address);
 	~Acceptor();
 
-	int Accept(InetAddress* address);
+	SOCKET Accept(InetAddress* address);
 
 	void Listen();
 
