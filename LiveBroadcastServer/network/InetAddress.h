@@ -3,15 +3,15 @@
 
 #include <cstdint>
 #include <string>
-#include "base/Platform.h"
+#include "network/PlatformNetwork.h"
 
 class InetAddress
 {
 public:
 	InetAddress();
-	InetAddress(uint16_t port, bool ipv6);
+	explicit InetAddress(uint16_t port, bool ipv6 = false);
 
-	std::string ToIpPort();
+	std::string ToIpPort() const;
 
 	struct sockaddr* GetSockAddr();
 

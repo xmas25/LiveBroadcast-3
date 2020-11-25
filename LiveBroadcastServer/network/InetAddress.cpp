@@ -24,7 +24,7 @@ InetAddress::InetAddress(uint16_t port, bool ipv6) :
 	}
 }
 
-std::string InetAddress::ToIpPort()
+std::string InetAddress::ToIpPort() const
 {
 	char buffer[64]{};
 

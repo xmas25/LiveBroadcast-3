@@ -1,9 +1,9 @@
 //
-// Created by rjd67 on 2020/11/21.
+// Created by rjd67 on 2020/11/25.
 //
 
-#ifndef NETWORK_PLATFORM_H
-#define NETWORK_PLATFORM_H
+#ifndef LIVEBROADCASTSERVER_PLATFORMNETWORK_H
+#define LIVEBROADCASTSERVER_PLATFORMNETWORK_H
 
 enum EVENTS
 {
@@ -56,4 +56,4 @@ int read(SOCKET s, char *buf, int len);
 #define SOCKET int
 #endif
 
-#endif //NETWORK_PLATFORM_H
+#endif //LIVEBROADCASTSERVER_PLATFORMNETWORK_H

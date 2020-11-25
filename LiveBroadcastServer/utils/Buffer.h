@@ -4,7 +4,7 @@
 #include <vector>
 #include <string>
 
-#include "base/Platform.h"
+#include "utils/PlatformBase.h"
 
 constexpr int DEFAULT_BUFFER_SIZE = 4096;
 constexpr int IDX_BEGIN = 8;
@@ -40,6 +40,7 @@ public:
 
 	size_t AppendData(const std::string* data);
 
+	std::string ReadAllAsString();
 	/**
 	 * 从sockfd中读取数据并保存到Buffer中
 	 * @param sockfd

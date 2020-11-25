@@ -6,7 +6,8 @@ Channel::Channel(EventLoop* loop, SOCKET fd) :
 	fd_(fd),
 	channel_status_(CHANNEL_STATUS_NEW),
 	event_(0),
-	ep_event_(0)
+	ep_event_(0),
+	tied_(false)
 {
 
 }
@@ -61,4 +62,16 @@ void Channel::EnableReadable()
 void Channel::Update()
 {
     loop_->Update(this);
+}
+
+void Channel::TieConnection(const std::shared_ptr<void>& connection_tie)
+{
+	connection_tie_ = connection_tie;
+	tied_ = true;
+}
+
+void Channel::DisableAll()
+{
+	ep_event_ = 0;
+	Update();
 }

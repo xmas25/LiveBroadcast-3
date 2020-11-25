@@ -1,7 +1,7 @@
 #ifndef NETWORK_CHANNEL
 #define NETWORK_CHANNEL
 
-#include "base/Platform.h"
+#include "network/PlatformNetwork.h"
 #include "network/Callback.h"
 
 class EventLoop;
@@ -31,6 +31,9 @@ public:
 
 	void EnableReadable();
 
+	void DisableAll();
+
+	void TieConnection(const std::shared_ptr<void>& connection_tie);
 private:
 	EventLoop* loop_;
 
@@ -40,6 +43,9 @@ private:
 	uint32_t ep_event_;
 
 	EventCallback readable_callback_;
+
+	std::weak_ptr<void> connection_tie_;
+	bool tied_;
 
 	void Update();
 };

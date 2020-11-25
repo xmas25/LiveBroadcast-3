@@ -1,9 +1,8 @@
 //
-// Created by rjd67 on 2020/11/22.
+// Created by rjd67 on 2020/11/25.
 //
 
-#ifdef _WIN32
-#include "Platform.h"
+#include "PlatformNetwork.h"
 
 NetworkInitializer::NetworkInitializer()
 {
@@ -36,6 +35,7 @@ std::string GetLastErrorAsString()
 	return message;
 }
 
+
 int write(SOCKET s, const uint8_t* buf, int len)
 {
 	return send(s, reinterpret_cast<const char*>(buf), len, 0);
@@ -45,5 +45,3 @@ int read(SOCKET s, char* buf, int len)
 {
 	return recv(s, buf, len, 0);
 }
-
-#endif

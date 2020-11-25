@@ -118,3 +118,10 @@ ssize_t Buffer::ReadFromSockfdAndDrop(SOCKET sockfd)
 	ssize_t result = recv(sockfd, WriteBegin(), WritableLength(), 0);
 	return result;
 }
+
+std::string Buffer::ReadAllAsString()
+{
+	std::string result(ReadBegin(), ReadableLength());
+	Reset();
+	return result;
+}

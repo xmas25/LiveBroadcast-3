@@ -4,7 +4,7 @@
 #include <string>
 #include <cassert>
 
-#include "base/Platform.h"
+#include "network/PlatformNetwork.h"
 #include "network/InetAddress.h"
 
 class Socket

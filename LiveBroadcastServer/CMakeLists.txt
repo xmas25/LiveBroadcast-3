@@ -19,7 +19,7 @@ set(NETWORK_SRCS
 		network/multiplexing/Epoll.cpp
 		network/multiplexing/MultiplexingBase.cpp
 		network/multiplexing/Select.cpp
-		)
+		network/PlatformNetwork.cpp network/PlatformNetwork.h)
 
 set(NETWORK_HEADERS
 		network/TcpServer.h
@@ -44,7 +44,8 @@ set(UTILS_SRCS
 		utils/codec/FlvCodec.cpp
 		utils/Buffer.cpp
 		utils/File.cpp
-)
+		utils/Timestamp.cpp
+		utils/Logger.cpp utils/Logger.h)
 
 set(UTILS_HEADERS
 		utils/codec/FlvManager.h
@@ -53,22 +54,20 @@ set(UTILS_HEADERS
 		utils/codec/FlvCodec.h
 		utils/Buffer.h
 		utils/File.h
-)
-
-set(BASE_SRCS
-		base/Platform.cpp
-)
-
-set(BASE_HEADERS
-		base/Platform.h
+		utils/Timestamp.h
 )
 
 # 后续会修改为模块化 因为过早模块化 会导致每次修改代码后需要rebuild才能更新 故临时使用这种方式
 
-add_executable(RtmpManagerTest "utils/codec/test/RtmpManagerTest.cpp" ${UTILS_SRCS} ${UTILS_HEADERS} ${BASE_SRCS} ${BASE_HEADERS})
+add_executable(RtmpManagerTest utils/codec/test/RtmpManagerTest.cpp ${UTILS_SRCS} ${UTILS_HEADERS})
 
-add_executable(main main.cpp ${NETWORK_SRCS} ${NETWORK_HEADERS} ${UTILS_SRCS} ${UTILS_HEADERS} ${BASE_SRCS} ${BASE_HEADERS})
+add_executable(main main.cpp ${NETWORK_SRCS} ${NETWORK_HEADERS} ${UTILS_SRCS} ${UTILS_HEADERS})
+
+add_executable(LoggerTest utils/test/LoggerTest.cpp utils/Logger.h utils/Logger.cpp utils/PlatformBase.h utils/PlatformBase.cpp)
+
+add_executable(TcpServerTest network/test/TcpServerTest.cpp ${NETWORK_SRCS} ${NETWORK_HEADERS} ${UTILS_SRCS} ${UTILS_HEADERS})
 
 if(WIN32)
 	target_link_libraries(main ws2_32)
+	target_link_libraries(TcpServerTest ws2_32)
 endif()

@@ -3,14 +3,13 @@
 
 #include "network/Socket.h"
 #include "network/Channel.h"
-#include "network/Callback.h"
-
-typedef std::function<void(SOCKET, const InetAddress&)> NewConnectionCallback;
 
 class EventLoop;
 class Acceptor
 {
 public:
+	typedef std::function<void(SOCKET, const InetAddress&)> NewConnectionCallback;
+
 	Acceptor(EventLoop* loop, const InetAddress& address);
 	~Acceptor();
 
