@@ -6,10 +6,11 @@ void DefaultNewConnection(SOCKET fd, const InetAddress& address)
 	
 }
 
-Acceptor::Acceptor(EventLoop* loop, const InetAddress& address) :
+Acceptor::Acceptor(EventLoop* loop, const std::string& server_name, const InetAddress& address) :
 	loop_(loop),
+	name_(server_name + '-' + "acceptor"),
 	listenfd_(socketops::Socket(address.GetFamily())),
-	channel_(loop, listenfd_.GetSockFd()),
+	channel_(loop, name_, listenfd_.GetSockFd()),
 	newconnection_callback_(DefaultNewConnection)
 {
 	listenfd_.SetReuseAddr();

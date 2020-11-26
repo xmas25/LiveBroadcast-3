@@ -39,7 +39,7 @@ SOCKET Channel::GetSockFd() const
 	return fd_;
 }
 
-void Channel::HandleEvent()
+void Channel::HandleEventWithGuard()
 {
 	/**
 	 * lock增加TcpConnectionPtr的引用计数 防止从TcpServer中erase后 直接销毁TcpConnection
@@ -52,19 +52,24 @@ void Channel::HandleEvent()
 	 *
 	 * 经过查阅后自己对深度探索C++对象模型 有了更深得理解
 	 */
-	std::shared_ptr<void> guard = tie_.lock();
-	if (!guard)
+
+	if (tied_)
 	{
-		LOG_WARN("connection: %s is closed", connection_name.c_str());
+		std::shared_ptr<void> guard = tie_.lock();
+		if (!guard)
+		{
+			LOG_WARN("connection: %s is closed", connection_name.c_str());
+		}
+		else
+		{
+			HandleEvent();
+		}
+	}
+	else
+	{
+		HandleEvent();
 	}
 
-	if (event_ & XEPOLLIN)
-	{
-        if (readable_callback_)
-        {
-            readable_callback_();
-        }
-	}
 }
 
 void Channel::SetReadableCallback(const EventCallback& cb)
@@ -93,4 +98,15 @@ void Channel::DisableAll()
 {
 	ep_event_ = 0;
 	Update();
+}
+
+void Channel::HandleEvent()
+{
+	if (event_ & XEPOLLIN)
+	{
+		if (readable_callback_)
+		{
+			readable_callback_();
+		}
+	}
 }

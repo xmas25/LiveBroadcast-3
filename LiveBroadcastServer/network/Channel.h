@@ -25,7 +25,7 @@ public:
 
 	SOCKET GetSockFd() const;
 
-	void HandleEvent();
+	void HandleEventWithGuard();
 
 	void SetReadableCallback(const EventCallback& cb);
 
@@ -50,6 +50,8 @@ private:
 	bool tied_;
 
 	void Update();
+
+	void HandleEvent();
 };
 
 #endif

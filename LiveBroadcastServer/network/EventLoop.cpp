@@ -44,6 +44,6 @@ void EventLoop::HandleActiveChannel()
 
 	for (Channel* channel : active_channels_)
 	{
-		channel->HandleEvent();
+		channel->HandleEventWithGuard();
 	}
 }

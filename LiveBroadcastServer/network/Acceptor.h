@@ -10,7 +10,7 @@ class Acceptor
 public:
 	typedef std::function<void(SOCKET, const InetAddress&)> NewConnectionCallback;
 
-	Acceptor(EventLoop* loop, const InetAddress& address);
+	Acceptor(EventLoop* loop, const std::string& server_name, const InetAddress& address);
 	~Acceptor();
 
 	SOCKET Accept(InetAddress* address);
@@ -21,6 +21,8 @@ public:
 
 private:
 	EventLoop* loop_;
+
+	std::string name_;
 
 	Socket listenfd_;
 

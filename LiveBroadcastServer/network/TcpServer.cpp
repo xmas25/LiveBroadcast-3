@@ -5,7 +5,7 @@
 TcpServer::TcpServer(EventLoop* loop, const std::string& server_name, const InetAddress& address) :
 	loop_(loop),
 	server_name_(server_name),
-	acceptor_(loop, address),
+	acceptor_(loop, server_name, address),
 	connection_id_(0)
 {
 	acceptor_.SetNewConnectionCallback(std::bind(&TcpServer::OnNewConnection, this, _1, _2));
