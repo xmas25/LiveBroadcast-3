@@ -5,7 +5,7 @@ TcpConnection::TcpConnection(EventLoop* loop, const std::string& connection_name
 		loop_(loop),
 		connection_name_(connection_name),
 		socket_(sockfd),
-		channel_(loop, sockfd),
+		channel_(loop, connection_name, sockfd),
 		address_(address)
 {
 	channel_.SetReadableCallback(std::bind(&TcpConnection::OnReadable, this));
@@ -54,6 +54,7 @@ void TcpConnection::OnReadable()
 	else
 	{
 		abort();
+
 	}
 }
 

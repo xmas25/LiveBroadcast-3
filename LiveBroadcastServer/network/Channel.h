@@ -15,7 +15,7 @@ public:
 		CHANNEL_STATUS_DEL
 	};
 
-	Channel(EventLoop* loop, SOCKET sockfd);
+	Channel(EventLoop* loop, const std::string& connection_name, SOCKET sockfd);
 
 	void SetEvent(uint32_t ev);
 	uint32_t GetEpollEvent() const;
@@ -37,6 +37,8 @@ public:
 private:
 	EventLoop* loop_;
 
+	std::string connection_name;
+
 	SOCKET fd_;
 	ChannelStatus channel_status_;
 	uint32_t event_;
@@ -44,7 +46,7 @@ private:
 
 	EventCallback readable_callback_;
 
-	std::weak_ptr<void> connection_tie_;
+	std::weak_ptr<void> tie_;
 	bool tied_;
 
 	void Update();
