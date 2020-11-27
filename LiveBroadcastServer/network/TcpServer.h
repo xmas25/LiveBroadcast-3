@@ -19,7 +19,7 @@ public:
 
 	void Start();
 
-	void SetNewConnectionCallback(const NewConnectionCallback& cb);
+	void SetConnectionCallback(const ConnectionCallback& cb);
 
 	void SetNewMessageCallback(const NewMessageCallback& callback);
 
@@ -30,7 +30,7 @@ private:
 
 	Acceptor acceptor_;
 
-	NewConnectionCallback newconnection_callback_;
+	ConnectionCallback connection_callback_;
 	NewMessageCallback newmessage_callback_;
 
 	TcpConnectionMap connection_map_;

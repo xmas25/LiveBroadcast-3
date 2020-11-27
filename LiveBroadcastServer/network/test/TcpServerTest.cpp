@@ -24,7 +24,7 @@ int main()
 	InetAddress address(4000);
 	TcpServer server(&loop, "TcpServerTest", address);
 
-	server.SetNewConnectionCallback(OnNewConnection);
+	server.SetConnectionCallback(OnNewConnection);
 	server.SetNewMessageCallback(OnNewMessage);
 
 	server.Start();

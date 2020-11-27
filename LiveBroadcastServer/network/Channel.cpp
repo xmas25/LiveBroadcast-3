@@ -97,6 +97,7 @@ void Channel::TieConnection(const std::shared_ptr<void>& connection_tie)
 void Channel::DisableAll()
 {
 	ep_event_ = 0;
+	channel_status_ = CHANNEL_STATUS_DEL;
 	Update();
 }
 

@@ -5,7 +5,9 @@
 #include <ctime>
 
 #include "network/TcpServer.h"
+#include "network/EventLoop.h"
 #include "utils/codec/RtmpManager.h"
+#include "utils/Logger.h"
 
 #ifdef _WIN32
 NetworkInitializer init;
@@ -46,7 +48,7 @@ void ShakeHands(SOCKET fd)
 	write(fd, RTMP_6, sizeof RTMP_6);
 }
 
-void WriteToFile(FlvManager* flv_manager, File* file_write)
+ssize_t WriteToFile(FlvManager* flv_manager, File* file_write)
 {
 	/**
 	 * 写文件头 包含header, 脚本Tag, 第一个音频和第一个视频Tag
@@ -74,41 +76,64 @@ void WriteToFile(FlvManager* flv_manager, File* file_write)
 		assert(write_bytes == static_cast<ssize_t>(body->length()));
 		sum_write_bytes += write_bytes;
 	}
-	printf("sum write: %zu\n", sum_write_bytes);
-	printf("write file: %s success\n", file_write->GetPath().c_str());
+	
+	return sum_write_bytes;
 }
 
-void NewConnection(SOCKET fd, const InetAddress& address)
+std::map<std::string, RtmpManager*> rtmp_manager_map;
+std::map<std::string, size_t> last_write_m;
+
+void OnConnection(const TcpConnectionPtr& connection_ptr)
 {
-	ShakeHands(fd);
-
-	RtmpManager rtmp_manager;
-	Buffer buffer(8192);
-	while (true)
+	if (connection_ptr->Connected())
 	{
-		ssize_t read_bytes = buffer.ReadFromSockfd(fd);
+		int fd = connection_ptr->GetSockfd();
+		ShakeHands(fd);
 
-		if (read_bytes == 0)
-		{
-			printf("connection close\n");
-			close(fd);
-			break;
-		}
-		rtmp_manager.ParseData(&buffer);
+		rtmp_manager_map[connection_ptr->GetConnectionName()] = new RtmpManager;
+		last_write_m[connection_ptr->GetConnectionName()] = 0;
+		
+		LOG_INFO("connection: %s start parse", connection_ptr->GetConnectionName().c_str());
 	}
+	else
+	{
+		LOG_INFO("connection: %s start write data to file", connection_ptr->GetConnectionName().c_str());
+		
+		RtmpManager* rtmp_manager = rtmp_manager_map[connection_ptr->GetConnectionName()];
 
-	time_t t = time(nullptr);
-	File file(ROOT + std::to_string(t) + FILE_PREFIX, File::O_WRONLY);
-	WriteToFile(rtmp_manager.GetFlvManager(), &file);
+		time_t t = time(nullptr);
+		File file_write(ROOT + std::to_string(t) + FILE_PREFIX, File::O_WRONLY);
+		ssize_t sum_write_bytes = WriteToFile(rtmp_manager->GetFlvManager(), &file_write);
+		
+		LOG_INFO("connection: %s write %zob bytes to %s success",
+				connection_ptr->GetConnectionName().c_str(),
+				sum_write_bytes,
+				file_write.GetPath().c_str());
+	}
 }
 
+void OnNewMessage(const TcpConnectionPtr& connection_ptr, Buffer* buffer, Timestamp timestamp)
+{
+	RtmpManager* rtmp_manager = rtmp_manager_map[connection_ptr->GetConnectionName()];
+
+	rtmp_manager->ParseData(buffer);
+
+	size_t read_m = buffer->GetSumRead() / 1000000;
+	if (read_m != last_write_m[connection_ptr->GetConnectionName()])
+	{
+		last_write_m[connection_ptr->GetConnectionName()] = read_m;
+		LOG_INFO("connection: %s, sum write %zuMb", connection_ptr->GetConnectionName().c_str(),
+				read_m);
+	}
+}
 
 int main()
 {
 	EventLoop loop;
 	InetAddress address(4000, true);
-	TcpServer server(&loop, address);
-	server.SetNewConnectionCallback(NewConnection);
+	TcpServer server(&loop, "main_server", address);
+	server.SetConnectionCallback(OnConnection);
+	server.SetNewMessageCallback(OnNewMessage);
 	server.Start();
 
 	loop.Loop();

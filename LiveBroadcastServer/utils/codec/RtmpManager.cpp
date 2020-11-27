@@ -54,7 +54,6 @@ ssize_t RtmpManager::ParseData(Buffer* buffer)
 				{
 					printf("ParseHeader error\n");
 				}
-
 			}
 			else if (parsed_status_ == RtmpManager::PARSE_RTMP_FIRST_HEADER)
 			{
@@ -63,7 +62,6 @@ ssize_t RtmpManager::ParseData(Buffer* buffer)
 				{
 					printf("ParseFirstHeader error\n");
 				}
-
 			}
 		}
 

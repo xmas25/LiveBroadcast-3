@@ -25,7 +25,7 @@ public:
 	 * @param address 链接地址
 	 */
 	TcpConnection(EventLoop* loop, const std::string& connection_name, SOCKET sockfd, const InetAddress& address);
-
+	~TcpConnection();
 	/**
 	 * 建立连接
 	 */
@@ -40,24 +40,36 @@ public:
 	 * @param callback
 	 */
 	void SetNewMessageCallback(const NewMessageCallback& callback);
-	void SetNewConnectionCallback(const NewConnectionCallback& callback);
-	void SetConnectionCloseCallback(const ConnectionCloseCallback& callback);
+
+	/**
+	 * 设置连接信息回调函数 建立新的连接和断开连接均调用
+	 * @param callback
+	 */
+	void SetConnectionCallback(const ConnectionCallback& callback);
+	void SetConnectionCloseCallback(const ConnectionCallback& callback);
 
 	const std::string& GetConnectionName() const;
+
+	SOCKET GetSockfd() const;
+
+	bool Connected() const;
 private:
+	enum Status {DISCONNECTING, DISCONNECTED, CONNECTING, CONNECTED};
+
+	Status connection_status_;
 
 	EventLoop* loop_;
 
 	std::string connection_name_;
 
-	Socket socket_;
+	Socket sockfd_;
 	Channel channel_;
 
 	InetAddress address_;
 
-	NewConnectionCallback newconnection_callback_;
+	ConnectionCallback connection_callback_;
+	ConnectionCallback connection_close_callback_;
 	NewMessageCallback newmessage_callback_;
-	ConnectionCloseCallback connection_close_callback_;
 
 	Buffer recv_buffer_;
 

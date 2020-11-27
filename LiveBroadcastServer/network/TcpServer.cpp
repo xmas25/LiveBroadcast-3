@@ -13,6 +13,11 @@ TcpServer::TcpServer(EventLoop* loop, const std::string& server_name, const Inet
 
 TcpServer::~TcpServer()
 {
+	for (auto [connection_name, connection_ptr] : connection_map_)
+	{
+		LOG_INFO("close connection: %s", connection_name.c_str());
+		connection_ptr->CloseConnection();
+	}
 }
 
 void TcpServer::Start()
@@ -20,9 +25,9 @@ void TcpServer::Start()
 	acceptor_.Listen();
 }
 
-void TcpServer::SetNewConnectionCallback(const NewConnectionCallback& cb)
+void TcpServer::SetConnectionCallback(const ConnectionCallback& cb)
 {
-	newconnection_callback_ = cb;
+	connection_callback_ = cb;
 }
 
 void TcpServer::OnNewConnection(SOCKET sockfd, const InetAddress& address)
@@ -34,7 +39,7 @@ void TcpServer::OnNewConnection(SOCKET sockfd, const InetAddress& address)
 	TcpConnectionPtr connection_ptr = std::make_shared<TcpConnection>(loop_, connection_name,
 			sockfd, address);
 	connection_ptr->SetNewMessageCallback(newmessage_callback_);
-	connection_ptr->SetNewConnectionCallback(newconnection_callback_);
+	connection_ptr->SetConnectionCallback(connection_callback_);
 	connection_ptr->SetConnectionCloseCallback(std::bind(&TcpServer::OnCloseConnection,this, _1));
 
 	connection_map_[connection_name] = connection_ptr;
