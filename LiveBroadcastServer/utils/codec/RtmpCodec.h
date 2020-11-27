@@ -62,10 +62,13 @@ public:
 
 	enum RtmpPackType : uint8_t
 	{
+		RTMP_OTHER = 0,
+		RTMP_ABORT = 2,
+		RTMP_ACKNOWLEDGE = 3,
+		RTMP_CONTROL = 4,
 		RTMP_AUDIO = 8,
 		RTMP_VIDEO = 9,
-		RTMP_SCRIPT = 18,
-		RTMP_OTHER = 0,
+		RTMP_SCRIPT = 18
 	};
 
 	RtmpPack() = default;
@@ -128,7 +131,7 @@ public:
 	 * @brief 将RtmpPack的头部部分 转换到 FlvTag的头部
 	 * @return
 	*/
-	bool EncodeHeaderToFlvTag(RtmpPack* rtmp_pack_, FlvTag* flv_tag);
+	bool EncodeHeaderToFlvTag(const RtmpPack* rtmp_pack_, FlvTag* flv_tag);
 
 	void AddTimeStamp(const uint8_t* timestamp);
 private:

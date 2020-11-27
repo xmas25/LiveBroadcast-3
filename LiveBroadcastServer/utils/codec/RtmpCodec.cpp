@@ -16,7 +16,7 @@ ssize_t RtmpCodec::DecodeHeader(const char* data, size_t length, RtmpPack* rtmp_
 	return rtmp_pack_->DecodeHeader(data, length);
 }
 
-bool RtmpCodec::EncodeHeaderToFlvTag(RtmpPack* rtmp_pack_, FlvTag* flv_tag)
+bool RtmpCodec::EncodeHeaderToFlvTag(const RtmpPack* rtmp_pack_, FlvTag* flv_tag)
 {
 	if (!flv_tag)
 	{
@@ -138,21 +138,18 @@ ssize_t RtmpPack::DecodeFmt2(const char* data, size_t length)
 
 void RtmpPack::SetPackType(uint8_t type)
 {
-	if (type == 8)
+	switch (type)
 	{
-		pack_type_ = RtmpPack::RTMP_AUDIO;
-	}
-	else if (type == 9)
-	{
-		pack_type_ = RtmpPack::RTMP_VIDEO;
-	}
-	else if (type == 18)
-	{
-		pack_type_ = RtmpPack::RTMP_SCRIPT;
-	}
-	else
-	{
-		pack_type_ = RtmpPack::RTMP_OTHER;
+		case 8:
+		case 9:
+		case 18:
+		case 2:
+		case 3:
+		case 4:
+			pack_type_ = static_cast<RtmpPackType>(type);
+			break;
+		default:
+			pack_type_ = RtmpPackType::RTMP_OTHER;
 	}
 }
 

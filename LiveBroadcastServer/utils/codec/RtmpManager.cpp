@@ -1,9 +1,9 @@
+#include <cassert>
 #include "utils/codec/RtmpManager.h"
 
 RtmpManager::RtmpManager():
 		parsed_status_(RtmpManager::PARSE_RTMP_FIRST_HEADER),
 		parsed_length_(0),
-		rtmp_pack_(),
 		rtmp_codec_(),
 		flv_manager_(),
 		read_chunk_size_(0),
@@ -34,48 +34,59 @@ ssize_t RtmpManager::ParseData(Buffer* buffer)
 	{
 		if (parsed_status_ == RtmpManager::PARSE_RTMP_BODY)
 		{
-			parsed = ParseBody(buffer);
+			parsed = ParseBody(buffer, current_tag_);
 
 			if (parsed > 0)
 			{
-				PushBackCurrentFlvTag();
+				PushBackFlvTag(current_tag_);
 			}
 			else if (parsed < 0)
 			{
 				printf("ParseBody error\n");
 			}
 		}
-		else
+		else if (parsed_status_ == RtmpManager::PARSE_RTMP_HEADER)
 		{
-			if (parsed_status_ == RtmpManager::PARSE_RTMP_HEADER)
+			RtmpPack rtmp_pack{};
+			parsed = ParseHeader(buffer, &rtmp_pack);
+			if (parsed > 0)
 			{
-				parsed = ParseHeader(buffer);
-				if (parsed < 0)
+				/**
+				 * 当前chunk未结束的时候 会继续发送数据 append到当前的tag即可 不应该new一个新的
+				*/
+				if (chunk_over_)
 				{
-					printf("ParseHeader error\n");
+					current_tag_ = new FlvTag;
+					rtmp_codec_.EncodeHeaderToFlvTag(&rtmp_pack, current_tag_);
 				}
+				parsed_status_ = RtmpManager::PARSE_RTMP_BODY;
 			}
-			else if (parsed_status_ == RtmpManager::PARSE_RTMP_FIRST_HEADER)
+			else if (parsed < 0)
 			{
-				parsed = ParseFirstHeader(buffer);
-				if (parsed < 0)
-				{
-					printf("ParseFirstHeader error\n");
-				}
+				printf("ParseHeader error\n");
+			}
+		}
+		else if (parsed_status_ == RtmpManager::PARSE_RTMP_FIRST_HEADER)
+		{
+			parsed = ParseFirstHeader(buffer);
+			if (parsed < 0)
+			{
+				printf("ParseFirstHeader error\n");
 			}
 		}
 
-		if (parsed < 0)
+		if (parsed > 0)
 		{
-			parsed_length_ += current_loop_parsed;
-			return -1;
+			current_loop_parsed += parsed;
 		}
 		else if (parsed == 0)
 		{
 			break;
 		}
-		current_loop_parsed += parsed;
-
+		else
+		{
+			return -1;
+		}
 	}
 
 	parsed_length_ += current_loop_parsed;
@@ -113,9 +124,10 @@ ssize_t RtmpManager::ParseFirstHeader(Buffer* buffer)
 ssize_t RtmpManager::ParseScriptPack(Buffer* buffer)
 {
 	ssize_t result = 0;
+	RtmpPack rtmp_pack{};
 	for (;;)
 	{
-		ssize_t parsed = rtmp_codec_.DecodeHeader(buffer->ReadBegin(), buffer->ReadableLength(), &rtmp_pack_);
+		ssize_t parsed = rtmp_codec_.DecodeHeader(buffer->ReadBegin(), buffer->ReadableLength(), &rtmp_pack);
 		buffer->AddReadIndex(parsed);
 		result += parsed;
 
@@ -124,10 +136,10 @@ ssize_t RtmpManager::ParseScriptPack(Buffer* buffer)
 			return -1;
 		}
 
-		if (rtmp_pack_.GetRtmpPackType() != RtmpPack::RTMP_SCRIPT)
+		if (rtmp_pack.GetRtmpPackType() != RtmpPack::RTMP_SCRIPT)
 		{
-			buffer->AddReadIndex(rtmp_pack_.GetDataSize());
-			result += rtmp_pack_.GetDataSize();
+			buffer->AddReadIndex(rtmp_pack.GetDataSize());
+			result += rtmp_pack.GetDataSize();
 		}
 		else
 		{
@@ -140,12 +152,10 @@ ssize_t RtmpManager::ParseScriptPack(Buffer* buffer)
 	/*
 	将rtmp_pack的header部分编码到FlvTag中 然后从buffer拷贝data到FlvTag中减少拷贝次数
 	*/
-	rtmp_codec_.EncodeHeaderToFlvTag(&rtmp_pack_, script_tag);
+	rtmp_codec_.EncodeHeaderToFlvTag(&rtmp_pack, script_tag);
 	script_tag->AppendData(buffer->ReadBegin(), script_tag->GetDataSize());
 	buffer->AddReadIndex(script_tag->GetDataSize());
 	result += script_tag->GetDataSize();
-
-
 
 	return result;
 }
@@ -162,10 +172,10 @@ ssize_t RtmpManager::ParseVideoAudio(Buffer* buffer)
 	 * tag为一个两个元素的数组指针 两个元素分别为第一个视频和音频Tag
 	*/
 	FlvTag* tag = flv_manager_.GetVideoAudioTags();
-
+	RtmpPack rtmp_pack{};
 	for (int i = 0; i < 2; ++i)
 	{
-		parsed = rtmp_codec_.DecodeHeader(buffer->ReadBegin(), buffer->ReadableLength(), &rtmp_pack_);
+		parsed = rtmp_codec_.DecodeHeader(buffer->ReadBegin(), buffer->ReadableLength(), &rtmp_pack);
 		buffer->AddReadIndex(parsed);
 		result += parsed;
 		if (parsed <= 0)
@@ -173,13 +183,13 @@ ssize_t RtmpManager::ParseVideoAudio(Buffer* buffer)
 			return -1;
 		}
 
-		if (rtmp_pack_.GetRtmpPackType() == RtmpPack::RTMP_AUDIO ||
-			rtmp_pack_.GetRtmpPackType() == RtmpPack::RTMP_VIDEO)
+		if (rtmp_pack.GetRtmpPackType() == RtmpPack::RTMP_AUDIO ||
+				rtmp_pack.GetRtmpPackType() == RtmpPack::RTMP_VIDEO)
 		{
-			rtmp_codec_.EncodeHeaderToFlvTag(&rtmp_pack_, &tag[i]);
+			rtmp_codec_.EncodeHeaderToFlvTag(&rtmp_pack, &tag[i]);
 			tag[i].AppendData(buffer->ReadBegin(), tag[i].GetDataSize());
-			buffer->AddReadIndex(rtmp_pack_.GetDataSize());
-			result += rtmp_pack_.GetDataSize();
+			buffer->AddReadIndex(rtmp_pack.GetDataSize());
+			result += rtmp_pack.GetDataSize();
 		}
 		else
 		{
@@ -191,9 +201,9 @@ ssize_t RtmpManager::ParseVideoAudio(Buffer* buffer)
 	return result;
 }
 
-ssize_t RtmpManager::ParseHeader(Buffer* buffer)
+ssize_t RtmpManager::ParseHeader(Buffer* buffer, RtmpPack* rtmp_pack)
 {
-	ssize_t parsed = rtmp_codec_.DecodeHeader(buffer->ReadBegin(), buffer->ReadableLength(), &rtmp_pack_);
+	ssize_t parsed = rtmp_codec_.DecodeHeader(buffer->ReadBegin(), buffer->ReadableLength(), rtmp_pack);
 	if (parsed < 0)
 	{
 		printf("ParseHeader-DecodeHeader error\n");
@@ -205,43 +215,13 @@ ssize_t RtmpManager::ParseHeader(Buffer* buffer)
 	}
 	buffer->AddReadIndex(parsed);
 
-	/**
-	 * 当前chunk未结束的时候 会继续发送数据 append到当前的tag即可 不应该new一个新的
-	*/
-	if (chunk_over_)
-	{
-		current_tag_ = new FlvTag;
-		rtmp_codec_.EncodeHeaderToFlvTag(&rtmp_pack_, current_tag_);
-	}
-
-
-	parsed_status_ = RtmpManager::PARSE_RTMP_BODY;
-
 	return parsed;
 }
 
-ssize_t RtmpManager::ParseBody(Buffer* buffer)
+ssize_t RtmpManager::ParseBody(Buffer* buffer, FlvTag* tag)
 {
-
-	// TODO 过滤掉非音频数据包的内容 由于过滤仍需丢弃body数据 这里暂时简化
-
-	uint8_t csid = rtmp_pack_.GetCsid();
-	if (csid != MOVIE_CSID)
-	{
-		if (csid == 3)
-		{
-			printf("control message, parse maybe success!\n");
-			return -1;
-		}
-		else
-		{
-			printf("rtmp_pack_.GetCsid: %u != MOVIE_CSID\n", rtmp_pack_.GetCsid());
-			return -1;
-		}
-	}
-
 	size_t readable = buffer->ReadableLength();
-	size_t remain = current_tag_->GetRemainDataSize();
+	size_t remain = tag->GetRemainDataSize();
 
 	// 只有在读满一个chunk分块4096字节后 返回解析一个新的header的时候
 	// 当remain小于等于RTMP_CHUNK_SIZE的时候说明 此chunk分块结束了
@@ -260,17 +240,17 @@ ssize_t RtmpManager::ParseBody(Buffer* buffer)
 
 		if (readable < remain)
 		{
-			current_tag_->AppendData(buffer->ReadBegin(), readable);
-			buffer->Reset();
+			tag->AppendData(buffer->ReadBegin(), readable);
+			buffer->AddReadIndex(readable);
 			return 0;
 		}
 		else
 		{
-			current_tag_->AppendData(buffer->ReadBegin(), remain);
+			tag->AppendData(buffer->ReadBegin(), remain);
 			buffer->AddReadIndex(remain);
 
 			parsed_status_ = RtmpManager::PARSE_RTMP_HEADER;
-			return current_tag_->GetDataSize();
+			return tag->GetDataSize();
 		}
 	}
 	else
@@ -279,13 +259,13 @@ ssize_t RtmpManager::ParseBody(Buffer* buffer)
 		size_t current_chunk_remain = RTMP_CHUNK_SIZE - read_chunk_size_;
 		if (readable < current_chunk_remain)
 		{
-			current_tag_->AppendData(buffer->ReadBegin(), readable);
+			tag->AppendData(buffer->ReadBegin(), readable);
 			buffer->AddReadIndex(readable);
 			read_chunk_size_ += readable;
 		}
 		else
 		{
-			current_tag_->AppendData(buffer->ReadBegin(), current_chunk_remain);
+			tag->AppendData(buffer->ReadBegin(), current_chunk_remain);
 			buffer->AddReadIndex(current_chunk_remain);
 
 			/* chunk 结束 清除当前chunk已读字节数*/
@@ -298,7 +278,40 @@ ssize_t RtmpManager::ParseBody(Buffer* buffer)
 	}
 }
 
-void RtmpManager::PushBackCurrentFlvTag()
+void RtmpManager::PushBackFlvTag(FlvTag* tag)
 {
-	flv_manager_.PushBackFlvTagAndSetPreviousSize(current_tag_);
+	flv_manager_.PushBackFlvTagAndSetPreviousSize(tag);
+}
+
+bool RtmpManager::ShakeHands(SOCKET sockfd)
+{
+	Buffer buffer(8192);
+
+	ssize_t read_bytes = buffer.ReadFromSockfdAndDrop(sockfd);
+	assert(read_bytes == 1537);
+
+	ssize_t send_bytes = write(sockfd, RTMP_S01, sizeof RTMP_S01);
+	assert(send_bytes == 1537);
+
+	read_bytes = buffer.ReadFromSockfdAndDrop(sockfd);
+	assert(read_bytes == 1536);
+
+	send_bytes = write(sockfd, RTMP_S2, sizeof RTMP_S2);
+	assert(send_bytes == 1536);
+
+	read_bytes = buffer.ReadFromSockfd(sockfd);
+	write(sockfd, RTMP_1, sizeof RTMP_1);
+
+	read_bytes = buffer.ReadFromSockfd(sockfd);
+	write(sockfd, RTMP_2, sizeof RTMP_2);
+	write(sockfd, RTMP_3, sizeof RTMP_3);
+	write(sockfd, RTMP_4, sizeof RTMP_4);
+
+	read_bytes = buffer.ReadFromSockfd(sockfd);
+	write(sockfd, RTMP_5, sizeof RTMP_5);
+
+	read_bytes = buffer.ReadFromSockfd(sockfd);
+	write(sockfd, RTMP_6, sizeof RTMP_6);
+
+	return true;
 }

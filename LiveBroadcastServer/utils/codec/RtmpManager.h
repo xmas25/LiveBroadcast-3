@@ -25,13 +25,14 @@ public:
 	ssize_t ParseData(Buffer* buffer);
 
 	FlvManager* GetFlvManager();
+
+	bool ShakeHands(SOCKET sockfd);
 private:
 
 	ParseStatus parsed_status_;
 
 	size_t parsed_length_;
 
-	RtmpPack rtmp_pack_;
 	RtmpCodec rtmp_codec_;
 
 	FlvManager flv_manager_;
@@ -47,11 +48,11 @@ private:
 	ssize_t ParseScriptPack(Buffer* buffer);
 	ssize_t ParseVideoAudio(Buffer* buffer);
 
-	ssize_t ParseHeader(Buffer* buffer);
+	ssize_t ParseHeader(Buffer* buffer, RtmpPack* rtmp_pack);
 
-	ssize_t ParseBody(Buffer* buffer);
+	ssize_t ParseBody(Buffer* buffer, FlvTag* tag);
 
-	void PushBackCurrentFlvTag();
+	void PushBackFlvTag(FlvTag* tag);
 };
 
 #endif

@@ -55,11 +55,6 @@ char* Buffer::ReadBegin()
 void Buffer::AdjustBuffer()
 {
 	size_t readable_length = ReadableLength();
-	if (readable_length == 0)
-	{
-		Reset();
-		return;
-	}
 
 	memcpy(&buffer_[IDX_BEGIN], &buffer_[read_idx_], readable_length);
 	read_idx_ = IDX_BEGIN;
@@ -70,6 +65,8 @@ void Buffer::Reset()
 {
 	read_idx_ = IDX_BEGIN;
 	write_idx_ = IDX_BEGIN;
+	sum_read_ = 0;
+	sum_write_ = 0;
 }
 
 size_t Buffer::GetSumRead() const
@@ -122,6 +119,6 @@ ssize_t Buffer::ReadFromSockfdAndDrop(SOCKET sockfd)
 std::string Buffer::ReadAllAsString()
 {
 	std::string result(ReadBegin(), ReadableLength());
-	Reset();
+	AddReadIndex(ReadableLength());
 	return result;
 }

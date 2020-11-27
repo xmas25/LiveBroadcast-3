@@ -31,6 +31,9 @@ public:
 
 	void AdjustBuffer();
 
+	/**
+	 * 重置Buffer 清除所有数据 重置总读写字节数
+	 */
 	void Reset();
 
 	size_t GetSumRead() const;

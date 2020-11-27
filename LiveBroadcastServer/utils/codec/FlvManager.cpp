@@ -299,7 +299,7 @@ ssize_t FlvManager::ParseTagData(FlvTag* tag)
 	else
 	{
 		tag->AppendData(buffer_.ReadBegin(), buffer_size);
-		buffer_.Reset();
+		buffer_.AddReadIndex(buffer_size);
 		return 0;
 	}
 
