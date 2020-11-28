@@ -87,7 +87,7 @@ ssize_t File::Write(const char* buffer, size_t length)
 	return result;
 }
 
-ssize_t File::Write(Buffer* buffer)
+ssize_t File::Write(const Buffer* buffer)
 {
 	if (!buffer)
 	{
@@ -98,7 +98,6 @@ ssize_t File::Write(Buffer* buffer)
 	{
 		return result;
 	}
-	buffer->AddReadIndex(result);
 	return result;
 }
 

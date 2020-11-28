@@ -16,21 +16,14 @@ ssize_t RtmpCodec::DecodeHeader(const char* data, size_t length, RtmpPack* rtmp_
 	return rtmp_pack_->DecodeHeader(data, length);
 }
 
-bool RtmpCodec::EncodeHeaderToFlvTag(const RtmpPack* rtmp_pack_, FlvTag* flv_tag)
+void RtmpCodec::EncodeHeaderToFlvTag(RtmpPack* rtmp_pack_, FlvTag* flv_tag)
 {
-	if (!flv_tag)
-	{
-		return false;
-	}
-
 	flv_tag->SetTagType(static_cast<uint8_t>(rtmp_pack_->GetRtmpPackType()));
 	flv_tag->SetDataSize(rtmp_pack_->GetDataSizePtr());
 
 	AddTimeStamp(rtmp_pack_->GetTimeStamp());
 	uint8_t ts[3] = {ts_[2], ts_[1], ts_[0]};
 	flv_tag->SetTimeStamp(ts);
-
-	return true;
 }
 
 RtmpCodec::RtmpCodec() :
@@ -44,6 +37,18 @@ void RtmpCodec::AddTimeStamp(const uint8_t* timestamp)
 	timestamp_ += timestamp[2];
 	timestamp_ += timestamp[1] * 256;
 	timestamp_ += timestamp[0] * 65536;
+}
+
+void RtmpCodec::EncodeHeaderAndSwapBuffer(RtmpPack* rtmp_pack_, FlvTag* flv_tag)
+{
+	EncodeHeaderToFlvTag(rtmp_pack_, flv_tag);
+	SwapBuffer(rtmp_pack_, flv_tag);
+}
+
+void RtmpCodec::SwapBuffer(RtmpPack* rtmp_pack_, FlvTag* flv_tag)
+{
+	rtmp_pack_->GetBuffer()->
+		SwapBuffer(flv_tag->GetBody());
 }
 
 ssize_t RtmpPack::DecodeHeader(const char* data, size_t length)
@@ -72,10 +77,7 @@ ssize_t RtmpPack::DecodeHeader(const char* data, size_t length)
 			break;
 		case FMT3:
 			result = FMT3_HEADER_LENGTH;
-
 			return result + 1; /* 不直接返回会与下面逻辑混淆*/
-
-			break;
 		default:
 			result = -1;
 			break;
@@ -166,7 +168,6 @@ const uint8_t* RtmpPack::GetDataSizePtr() const
 	return data_size_;
 }
 
-
 RtmpPack::RtmpPackFmt RtmpPack::GetFmt() const
 {
 	return fmt_;
@@ -180,4 +181,26 @@ uint8_t RtmpPack::GetCsid() const
 const uint8_t* RtmpPack::GetTimeStamp() const
 {
 	return timestamp_;
+}
+
+uint32_t RtmpPack::GetRemainDataSize() const
+{
+	return GetDataSize() - GetCurrentDataSize();
+}
+
+uint32_t RtmpPack::GetCurrentDataSize() const
+{
+	return buffer_.ReadableLength();
+}
+
+void RtmpPack::AppendData(const char* data, size_t length)
+{
+	buffer_.ReSize(GetDataSize());
+
+	buffer_.AppendData(data, length);
+}
+
+Buffer* RtmpPack::GetBuffer()
+{
+	return &buffer_;
 }

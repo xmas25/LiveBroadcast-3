@@ -38,8 +38,16 @@ void Buffer::AddWriteIndex(size_t index)
 
 void Buffer::AddReadIndex(size_t index)
 {
-	sum_read_ += index;
-	read_idx_ += index;
+	if (index > ReadableLength())
+	{
+		sum_read_ += ReadableLength();
+		read_idx_ += ReadableLength();
+	}else
+	{
+		sum_read_ += index;
+		read_idx_ += index;
+	}
+
 }
 
 char* Buffer::WriteBegin()
@@ -47,7 +55,7 @@ char* Buffer::WriteBegin()
 	return &buffer_[write_idx_];
 }
 
-char* Buffer::ReadBegin()
+const char* Buffer::ReadBegin() const
 {
 	return &buffer_[read_idx_];
 }
@@ -121,4 +129,43 @@ std::string Buffer::ReadAllAsString()
 	std::string result(ReadBegin(), ReadableLength());
 	AddReadIndex(ReadableLength());
 	return result;
+}
+
+void Buffer::ReSize(size_t new_size)
+{
+	buffer_.resize(new_size);
+}
+
+void Buffer::SwapBuffer(Buffer* buffer)
+{
+	if (!buffer)
+	{
+		return;
+	}
+
+	buffer_.swap(buffer->buffer_);
+	Swap(read_idx_, buffer->read_idx_);
+	Swap(write_idx_, buffer->write_idx_);
+	Swap(sum_write_, buffer->sum_write_);
+	Swap(sum_read_, buffer->sum_read_);
+}
+
+void Buffer::Swap(size_t& lhs, size_t& rhs)
+{
+	size_t temp = rhs;
+	rhs = lhs;
+	lhs = temp;
+}
+
+size_t Buffer::AppendData(const Buffer* buffer)
+{
+	size_t readable_data = buffer->ReadableLength();
+	AppendData(buffer->ReadBegin(), readable_data);
+	AddWriteIndex(readable_data);
+	return readable_data;
+}
+
+void Buffer::DropAllData()
+{
+	AddReadIndex(ReadableLength());
 }

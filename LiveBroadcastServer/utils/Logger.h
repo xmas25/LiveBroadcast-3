@@ -24,7 +24,8 @@
 {	\
 	printf("[%s][ %s:%d ]: ", level, __FILENAME__, __LINE__);	\
 	printf(__VA_ARGS__);	\
-	printf(CRLF);	\
+	printf(CRLF);          \
+	fflush(stdout);                  \
 }
 
 class Logger

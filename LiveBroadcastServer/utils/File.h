@@ -51,7 +51,7 @@ public:
 
 	ssize_t Write(const char* buffer, size_t length);
 
-	ssize_t Write(Buffer* buffer);
+	ssize_t Write(const Buffer* buffer);
 
 	size_t GetFileSize();
 

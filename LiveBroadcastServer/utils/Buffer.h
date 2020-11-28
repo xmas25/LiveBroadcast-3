@@ -25,9 +25,14 @@ public:
 	void AddWriteIndex(size_t index);
 	void AddReadIndex(size_t index);
 
+	/**
+	 * 丢弃所有未读数据
+	 */
+	void DropAllData();
+
 	char* WriteBegin();
 
-	char* ReadBegin();
+	const char* ReadBegin() const;
 
 	void AdjustBuffer();
 
@@ -36,12 +41,16 @@ public:
 	 */
 	void Reset();
 
+	void ReSize(size_t new_size);
+
 	size_t GetSumRead() const;
 	size_t GetSumWrite() const;
 
 	size_t AppendData(const char* data, size_t length);
 
 	size_t AppendData(const std::string* data);
+
+	size_t AppendData(const Buffer* buffer);
 
 	std::string ReadAllAsString();
 	/**
@@ -57,13 +66,19 @@ public:
 	 * @return 丢弃的数据长度
 	 */
 	ssize_t ReadFromSockfdAndDrop(SOCKET sockfd);
-private:
+
+	void SwapBuffer(Buffer* buffer);
+
+protected:
 
 	std::vector<char> buffer_;
 	size_t read_idx_;
 	size_t write_idx_;
 	size_t sum_read_;
 	size_t sum_write_;
+
+private:
+	void Swap(size_t& lhs, size_t& rhs);
 };
 
 

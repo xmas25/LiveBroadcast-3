@@ -14,10 +14,29 @@ public:
 
 	enum ParseStatus
 	{
-		PARSE_RTMP_FIRST_HEADER,
+		PARSE_FIRST_HEADER,
 		PARSE_RTMP_HEADER,
 		PARSE_RTMP_BODY
 	};
+
+	/**
+	 *
+	 */
+	enum ShakeHandPackType
+	{
+		SHAKE_RTMP_C01,
+		SHAKE_RTMP_C2,
+		SHAKE_RTMP_SET_CHUNK_SIZE,
+		SHAKE_RTMP_CONNECT,
+		SHAKE_RTMP_RELEASE_STREAM,
+		SHAKE_RTMP_FCPUBLISH,
+		SHAKE_RTMP_CREATE_STREAM,
+		SHAKE_RTMP_PUBLISH,
+		SHAKE_SUCCESS,
+		SHAKE_FAILED,
+		SHAKE_DATA_NOT_ENOUGH
+	};
+
 
 	RtmpManager();
 	~RtmpManager();
@@ -26,10 +45,12 @@ public:
 
 	FlvManager* GetFlvManager();
 
-	bool ShakeHands(SOCKET sockfd);
+	ShakeHandPackType ParseShakeHand(Buffer* buffer);
+
 private:
 
 	ParseStatus parsed_status_;
+	ShakeHandPackType shake_hand_status_;
 
 	size_t parsed_length_;
 
@@ -37,7 +58,7 @@ private:
 
 	FlvManager flv_manager_;
 
-	FlvTag* current_tag_;
+	RtmpPack current_rtmp_pack_;
 
 	/* 由于chunk的分块存在 导致 当body大于4096字节时, 每读取4096个字节 需要重新解析一次header故在此记录*/
 	uint32_t read_chunk_size_;
@@ -45,12 +66,30 @@ private:
 	bool chunk_over_;
 
 	ssize_t ParseFirstHeader(Buffer* buffer);
-	ssize_t ParseScriptPack(Buffer* buffer);
-	ssize_t ParseVideoAudio(Buffer* buffer);
+	ssize_t ParseScriptPack(Buffer* buffer, RtmpPack* script_pack);
+	ssize_t ParseVideoAudio(Buffer* buffer, RtmpPack video_audio_pack[2]);
 
-	ssize_t ParseHeader(Buffer* buffer, RtmpPack* rtmp_pack);
+	ssize_t ParseBody(Buffer* buffer);
 
-	ssize_t ParseBody(Buffer* buffer, FlvTag* tag);
+	/**
+	 * 从Buffer中解析 Header, 不移动Buffer读指针
+	 * @param buffer
+	 * @param rtmp_pack
+	 * @return 成功返回解析的长度 数据不足返回-1
+	 */
+	static ssize_t ParseHeader(const Buffer* buffer, RtmpPack* rtmp_pack);
+
+	static ssize_t ParseBody(Buffer* buffer, RtmpPack* rtmp_pack, bool chunk_over,
+			uint32_t* read_chunk_size, ParseStatus* parsed_status);
+
+	/**
+	 * 解析头部后 解析body  如果解析头部或body时长度不足则返回0 不移动读指针
+	 * 如果完成解析则移动读指针
+	 * @param buffer
+	 * @param rtmp_pack
+	 * @return 解析成功返回解析长度 长度不足返回0 失败返回-1
+	 */
+	static ssize_t ParseHeaderAndBody(Buffer* buffer, RtmpPack* rtmp_pack);
 
 	void PushBackFlvTag(FlvTag* tag);
 };

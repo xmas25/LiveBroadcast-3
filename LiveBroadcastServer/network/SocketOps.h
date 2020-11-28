@@ -18,6 +18,8 @@ namespace socketops
 	void SetReuseAddr(SOCKET sockfd);
 
 	SOCKET Accept(SOCKET sockfd, struct sockaddr* address);
+
+	ssize_t Send(SOCKET sockfd, const char* data, size_t length);
 }
 
 #endif // !NETWORK_SOCKETOPS

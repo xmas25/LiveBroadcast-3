@@ -167,20 +167,18 @@ ssize_t FlvManager::EncodeHeadersToBuffer(Buffer* buffer)
 	assert(result > 0);
 	buffer->AddWriteIndex(result);
 
-	const FlvTagBody* body = script_tag_.GetBody();
+	const Buffer* body = script_tag_.GetBody();
 
 	buffer->AppendData(script_tag_.GetHeader(), FlvTag::FLV_TAG_HEADER_LENGTH);
-	buffer->AppendData(body->GetBody());
+	buffer->AppendData(body);
 
 	for (int i = 0; i < 2; ++i)
 	{
 		body = video_audio_tags[i].GetBody();
 
 		buffer->AppendData(video_audio_tags[i].GetHeader(), FlvTag::FLV_TAG_HEADER_LENGTH);
-		buffer->AppendData(body->GetBody());
+		buffer->AppendData(body);
 	}
-
-	assert(data_length == buffer->ReadableLength());
 
 	return data_length;
 }

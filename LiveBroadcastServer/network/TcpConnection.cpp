@@ -96,3 +96,13 @@ bool TcpConnection::Connected() const
 {
 	return connection_status_ == CONNECTED;
 }
+
+ssize_t TcpConnection::Send(const char* data, size_t length)
+{
+	return sockfd_.Send(data, length);
+}
+
+ssize_t TcpConnection::Send(const uint8_t* data, size_t length)
+{
+	return Send(reinterpret_cast<const char*>(data), length);
+}

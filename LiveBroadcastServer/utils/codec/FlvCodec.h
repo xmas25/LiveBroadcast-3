@@ -6,6 +6,7 @@
 #include <cstdlib>
 #include <string>
 
+#include "utils/Buffer.h"
 /**
  * 负责Flv文件的编码和解码
  *
@@ -60,31 +61,6 @@ private:
 	uint8_t version_; // 1
 	uint8_t type_flag_; // 5
 	uint32_t header_length_; // 9
-};
-
-/**
- * @brief 由于每个tag的data部分 不加处理会经过大量的拷贝
- * 这里简单实现了用于减少拷贝次数的包装
- *
- * TODO 替换掉低效的 std::string
-*/
-class FlvTagBody
-{
-public:
-	FlvTagBody() = default;
-	~FlvTagBody() = default;
-
-	/*FlvTagZeroCopy(const FlvTagZeroCopy& rhs) = delete;
-	FlvTagZeroCopy& operator=(const FlvTagZeroCopy& rhs) = delete;*/
-
-	const std::string* GetBody() const;
-
-	size_t GetBodySize() const;
-
-	void AppendData(const char* data, size_t length);
-private:
-
-	std::string body_;
 };
 
 /**
@@ -148,7 +124,7 @@ public:
 	*/
 	ssize_t DecodeTagHander(const char* data, size_t length);
 
-	const FlvTagBody* GetBody() const;
+	const Buffer* GetBody() const;
 	const char* GetHeader() const;
 
 	void SetTagType(uint8_t tag_type);
@@ -163,6 +139,7 @@ public:
 
 	uint8_t GetTagType() const;
 
+	Buffer* GetBody();
 private:
 	//uint32_t previous_tag_size_; // 不含previous_tag_size  sizeof 上一个Tag - 4  大端序保存
 	//uint8_t tag_type_; // 音频 8 视频 9 scripts 18
@@ -185,7 +162,7 @@ private:
 
 	/* 由于header会进行多次拷贝 所以为了减少拷贝次数 直接保存序列化后的结果*/
 	char header_[15];
-	FlvTagBody body_;
+	Buffer body_;
 };
 
 /**

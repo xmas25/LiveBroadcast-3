@@ -37,18 +37,7 @@ ssize_t FlvCodec::DecodeTagHander(const char* data, size_t length, FlvTag* tag)
 	return tag->DecodeTagHander(data, length);
 }
 
-const std::string* FlvTagBody::GetBody() const
-{
-	return &body_;
-}
-
 FlvTag::FlvTag() :
-/*previous_tag_size_(0),
-tag_type_(0),
-data_size_({0, 0, 0}),
-timestamp_({0, 0, 0}),
-timestamp_extend_(0),
-stream_id_({0, 0, 0})*/
 		header_()
 {
 
@@ -89,7 +78,7 @@ uint32_t FlvTag::GetTagSize() const
 
 uint32_t FlvTag::GetCurrentDataSize() const
 {
-	return body_.GetBodySize();
+	return body_.ReadableLength();
 }
 
 uint32_t FlvTag::GetRemainDataSize() const
@@ -130,7 +119,7 @@ void FlvTag::SetSteamId(uint8_t* stream_id)
 }
 
 
-const FlvTagBody* FlvTag::GetBody() const
+const Buffer* FlvTag::GetBody() const
 {
 	return &body_;
 }
@@ -157,6 +146,11 @@ uint8_t FlvTag::GetTagType() const
 	return header_[TAG_TYPE_SUB];
 }
 
+Buffer* FlvTag::GetBody()
+{
+	return &body_;
+}
+
 ssize_t FlvHeader::EncodeToBuffer(char* data, size_t length)
 {
 	if (length < FLV_HEADER_LENGTH)
@@ -167,14 +161,4 @@ ssize_t FlvHeader::EncodeToBuffer(char* data, size_t length)
 	memcpy(&data[0], DEFAULT_HEADER, sizeof DEFAULT_HEADER);
 
 	return FLV_HEADER_LENGTH;
-}
-
-size_t FlvTagBody::GetBodySize() const
-{
-	return body_.size();
-}
-
-void FlvTagBody::AppendData(const char* data, size_t length)
-{
-	body_.append(data, length);
 }

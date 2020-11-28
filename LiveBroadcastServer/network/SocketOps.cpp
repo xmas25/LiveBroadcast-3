@@ -55,3 +55,8 @@ SOCKET socketops::Accept(SOCKET sockfd, struct sockaddr* address)
 
 	return fd;
 }
+
+ssize_t socketops::Send(SOCKET sockfd, const char* data, size_t length)
+{
+	return send(sockfd, data, length, 0);
+}

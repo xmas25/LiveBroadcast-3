@@ -57,3 +57,8 @@ SOCKET Socket::Accept(InetAddress* address)
 	return socketops::Accept(sockfd_, address->GetSockAddr());
 }
 
+ssize_t Socket::Send(const char* data, size_t length)
+{
+	return socketops::Send(sockfd_, data, length);
+}
+

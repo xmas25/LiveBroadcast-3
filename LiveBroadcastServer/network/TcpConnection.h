@@ -53,6 +53,10 @@ public:
 	SOCKET GetSockfd() const;
 
 	bool Connected() const;
+
+	ssize_t Send(const char* data, size_t length);
+
+	ssize_t Send(const uint8_t * data, size_t length);
 private:
 	enum Status {DISCONNECTING, DISCONNECTED, CONNECTING, CONNECTED};
 
