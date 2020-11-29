@@ -137,29 +137,25 @@ ssize_t RtmpManager::ParseFirstHeader(Buffer* buffer)
 ssize_t RtmpManager::ParseScriptPack(Buffer* buffer, RtmpPack* script_pack)
 {
 	ssize_t result = 0;
-	for (;;)
+
+	ssize_t parsed = RtmpCodec::DecodeHeader(buffer->ReadBegin(), buffer->ReadableLength(), script_pack);
+	buffer->AddReadIndex(parsed);
+	result += parsed;
+
+	if (parsed <= 0)
 	{
-		ssize_t parsed = rtmp_codec_.DecodeHeader(buffer->ReadBegin(), buffer->ReadableLength(), script_pack);
-		buffer->AddReadIndex(parsed);
-		result += parsed;
+		return -1;
+	}
 
-		if (parsed <= 0)
-		{
-			return -1;
-		}
-
-		if (script_pack->GetRtmpPackType() != RtmpPack::RTMP_SCRIPT)
-		{
-			buffer->AddReadIndex(script_pack->GetDataSize());
-			result += script_pack->GetDataSize();
-		}
-		else
-		{
-			script_pack->AppendData(buffer->ReadBegin(), script_pack->GetDataSize());
-			buffer->AddReadIndex(script_pack->GetDataSize());
-			result += script_pack->GetDataSize();
-			break;
-		}
+	if (script_pack->GetRtmpPackType() != RtmpPack::RTMP_SCRIPT)
+	{
+		return -1;
+	}
+	else
+	{
+		script_pack->AppendData(buffer->ReadBegin(), script_pack->GetDataSize());
+		buffer->AddReadIndex(script_pack->GetDataSize());
+		result += script_pack->GetDataSize();
 	}
 
 	return result;
@@ -171,16 +167,11 @@ ssize_t RtmpManager::ParseVideoAudio(Buffer* buffer, RtmpPack video_audio_pack[2
 	* 就Obs推流的抓包结果来看 音视频的一个Tag是连着的 这里简化处理 如果不连续则返回错误
 	*/
 	ssize_t result = 0;
-	ssize_t parsed = 0;
+	ssize_t parsed;
 
-	/**
-	 * tag为一个两个元素的数组指针 两个元素分别为第一个视频和音频Tag
-	*/
-	FlvTag* tag = flv_manager_.GetVideoAudioTags();
-	RtmpPack rtmp_pack{};
 	for (int i = 0; i < 2; ++i)
 	{
-		parsed = rtmp_codec_.DecodeHeader(buffer->ReadBegin(), buffer->ReadableLength(), &rtmp_pack);
+		parsed = RtmpCodec::DecodeHeader(buffer->ReadBegin(), buffer->ReadableLength(), &video_audio_pack[i]);
 		buffer->AddReadIndex(parsed);
 		result += parsed;
 		if (parsed <= 0)
@@ -188,12 +179,13 @@ ssize_t RtmpManager::ParseVideoAudio(Buffer* buffer, RtmpPack video_audio_pack[2
 			return -1;
 		}
 
-		if (rtmp_pack.GetRtmpPackType() == RtmpPack::RTMP_AUDIO ||
-				rtmp_pack.GetRtmpPackType() == RtmpPack::RTMP_VIDEO)
+		if (video_audio_pack[i].GetRtmpPackType() == RtmpPack::RTMP_AUDIO ||
+				video_audio_pack[i].GetRtmpPackType() == RtmpPack::RTMP_VIDEO)
 		{
-			video_audio_pack[i].AppendData(buffer->ReadBegin(), tag[i].GetDataSize());
-			buffer->AddReadIndex(rtmp_pack.GetDataSize());
-			result += rtmp_pack.GetDataSize();
+			size_t data_size = video_audio_pack[i].GetDataSize();
+			video_audio_pack[i].AppendData(buffer->ReadBegin(), data_size);
+			buffer->AddReadIndex(data_size);
+			result += data_size;
 		}
 		else
 		{
@@ -374,6 +366,9 @@ RtmpManager::ShakeHandPackType RtmpManager::ParseShakeHand(Buffer* buffer)
 		{
 			if (buffer->ReadableLength() > 0)
 			{
+				/**
+				 * 这里会出现c3 包长度固定 但是上一个包已经写满 暂且不知道原因
+				 */
 				if ((uint8_t)*buffer->ReadBegin() == 0xc3)
 				{
 					buffer->AddReadIndex(26);

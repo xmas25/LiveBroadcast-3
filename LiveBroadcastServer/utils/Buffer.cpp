@@ -133,7 +133,7 @@ std::string Buffer::ReadAllAsString()
 
 void Buffer::ReSize(size_t new_size)
 {
-	buffer_.resize(new_size);
+	buffer_.resize(new_size + IDX_BEGIN);
 }
 
 void Buffer::SwapBuffer(Buffer* buffer)
@@ -161,7 +161,6 @@ size_t Buffer::AppendData(const Buffer* buffer)
 {
 	size_t readable_data = buffer->ReadableLength();
 	AppendData(buffer->ReadBegin(), readable_data);
-	AddWriteIndex(readable_data);
 	return readable_data;
 }
 
