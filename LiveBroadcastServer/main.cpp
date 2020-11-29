@@ -20,6 +20,7 @@ std::string ROOT = R"(/root/server/)";
 std::string FILE_PREFIX = ".flv";
 
 std::map<std::string, RtmpConnection*> rtmp_connection_map;
+std::map<std::string, size_t> send_sub_map;
 
 RtmpConnection* rtmp_connection = nullptr;
 
@@ -48,53 +49,75 @@ void OnConnection(const TcpConnectionPtr& connection_ptr)
 		time_t t = time(nullptr);
 		File file_write(ROOT + std::to_string(t) + FILE_PREFIX, File::O_WRONLY);
 		rtmp_manager->WriteToFile(&file_write);
+
+		delete rtmp_connection;
+		rtmp_connection = nullptr;
 	}
 }
 
-std::string response_header = "HTTP/1.1 200 OK\r\n"
-							  "Server: MC_VCLOUD_LIVE\r\n"
-							  "Date: Sun, 29 Nov 2020 09:02:15 GMT\r\n"
-							  "Content-Type: video/x-flv\r\n"
-							  "Transfer-Encoding: chunked\r\n"
-							  "Connection: keep-alive\r\n\r\n";
+
+void OnConnectionWritable(const TcpConnectionPtr& connection_ptr)
+{
+	if (rtmp_connection)
+	{
+		size_t send_sub = send_sub_map[connection_ptr->GetConnectionName()];
+		const std::vector<FlvTag*>* tags = rtmp_connection->GetFlvTagVector();
+		if (send_sub < tags->size())
+		{
+			Buffer send_buffer;
+			const FlvTag* tag = (*tags)[send_sub];
+			size_t tag_size = FlvTag::FLV_TAG_HEADER_LENGTH + tag->GetBody()->ReadableLength();
+			std::string length_rn = Format::ToHexStringWithCrlf(tag_size);
+			send_buffer.AppendData(length_rn);
+			send_buffer.AppendData(tag->GetHeader(), FlvTag::FLV_TAG_HEADER_LENGTH);
+			send_buffer.AppendData(tag->GetBody());
+			send_buffer.AppendData("\r\n");
+			send_sub_map[connection_ptr->GetConnectionName()]++;
+
+			connection_ptr->Send(&send_buffer);
+		}
+		else
+		{
+			send_sub_map[connection_ptr->GetConnectionName()] = 0;
+			connection_ptr->SetWriteCompleteCallback(nullptr);
+			connection_ptr->Send("0\r\n\r\n");
+		}
+	}
+}
 
 void OnConnectionClientServer(const TcpConnectionPtr& connection_ptr)
 {
-	if (connection_ptr->Connected())
-	{
-		ssize_t send_result = connection_ptr->Send(response_header.c_str(), response_header.length());
 
-		if (rtmp_connection)
-		{
-			const Buffer* buffer = rtmp_connection->GetHeaderDataBuffer();
-			std::string length_rn = Format::ToHexStringWithCrlf(buffer->ReadableLength());
-			connection_ptr->Send(length_rn);
-			connection_ptr->Send(buffer);
-			connection_ptr->Send("\r\n");
-
-			std::vector<FlvTag*> tags(*rtmp_connection->GetFlvTagVector());
-			for (const auto& tag : tags)
-			{
-				size_t tag_size = FlvTag::FLV_TAG_HEADER_LENGTH + tag->GetBody()->ReadableLength();
-				length_rn = Format::ToHexStringWithCrlf(tag_size);
-				connection_ptr->Send(length_rn);
-
-				connection_ptr->Send(tag->GetHeader(), FlvTag::FLV_TAG_HEADER_LENGTH);
-				send_result = connection_ptr->Send(tag->GetBody());
-				if (send_result <= 0)
-				{
-					LOG_INFO("OnConnectionClientServer, error: %s",
-							GetLastErrorAsString().c_str());
-					break;
-				}
-				connection_ptr->Send("\r\n");
-			}
-		}
-		connection_ptr->Send("0\r\n\r\n");
-		connection_ptr->Shutdown();
-	}
 }
 
+std::string response_header = "HTTP/1.1 200 OK\r\n"
+							  "Server: FISH_LIVE\r\n"
+							  "Date: Sun, 29 Nov 2020 15:30:42 GMT\r\n"
+							  "Content-Type: video/x-flv\r\n"
+							  "Transfer-Encoding: chunked\r\n"
+							  "Connection: keep-alive\r\n\r\n";
+void OnNewClientMessage(const TcpConnectionPtr& connection_ptr, Buffer* buffer, Timestamp timestamp)
+{
+	if (connection_ptr->Connected())
+	{
+		/**
+		 *发送HTTP头和 FlV数据的头部
+		 */
+
+		send_sub_map[connection_ptr->GetConnectionName()] = 0;
+
+		const Buffer* header_buffer = rtmp_connection->GetHeaderDataBuffer();
+		std::string length_rn = Format::ToHexStringWithCrlf(header_buffer->ReadableLength());
+
+		Buffer send_buffer;
+		send_buffer.AppendData(response_header);
+		send_buffer.AppendData(length_rn);
+		send_buffer.AppendData(header_buffer);
+		send_buffer.AppendData("\r\n");
+
+		connection_ptr->Send(&send_buffer);
+	}
+}
 int main()
 {
 	signal(SIGPIPE, SIG_IGN);
@@ -106,6 +129,8 @@ int main()
 
 	main_server.SetConnectionCallback(OnConnection);
 	client_server.SetConnectionCallback(OnConnectionClientServer);
+	client_server.SetNewMessageCallback(OnNewClientMessage);
+	client_server.SetWriteCompleteCallback(OnConnectionWritable);
 	main_server.Start();
 	client_server.Start();
 

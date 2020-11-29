@@ -31,6 +31,7 @@ void EventLoop::Loop()
 		looping_ = multiplexing_base_->LoopOnce(20, &active_channels_);
 
 		HandleActiveChannel();
+		HandlePendingFunc();
 	}
 }
 
@@ -46,4 +47,18 @@ void EventLoop::HandleActiveChannel()
 	{
 		channel->HandleEventWithGuard();
 	}
+}
+
+void EventLoop::RunInLoop(const EventLoop::EventLoopFunction& function)
+{
+	pending_func_.push_back(function);
+}
+
+void EventLoop::HandlePendingFunc()
+{
+	for (auto& func : pending_func_)
+	{
+		func();
+	}
+	pending_func_.clear();
 }

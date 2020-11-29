@@ -24,5 +24,6 @@ typedef std::function<void()> EventCallback;
 
 typedef std::shared_ptr<TcpConnection> TcpConnectionPtr;
 typedef std::function<void(const TcpConnectionPtr&)> ConnectionCallback;
+typedef std::function<void(const TcpConnectionPtr&)> WriteCompleteCallback;
 typedef std::function<void(const TcpConnectionPtr&, Buffer*, Timestamp)> NewMessageCallback;
 #endif // !NETWORK_CALLBACK_H

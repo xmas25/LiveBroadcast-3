@@ -21,6 +21,8 @@ public:
 
 	void SetConnectionCallback(const ConnectionCallback& cb);
 
+	void SetWriteCompleteCallback(const WriteCompleteCallback& cb);
+
 	void SetNewMessageCallback(const NewMessageCallback& callback);
 
 private:
@@ -31,6 +33,7 @@ private:
 	Acceptor acceptor_;
 
 	ConnectionCallback connection_callback_;
+	WriteCompleteCallback write_complete_callback_;
 	NewMessageCallback newmessage_callback_;
 
 	TcpConnectionMap connection_map_;

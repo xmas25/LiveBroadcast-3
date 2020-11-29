@@ -30,6 +30,11 @@ void TcpServer::SetConnectionCallback(const ConnectionCallback& cb)
 	connection_callback_ = cb;
 }
 
+void TcpServer::SetWriteCompleteCallback(const WriteCompleteCallback& cb)
+{
+	write_complete_callback_ = cb;
+}
+
 void TcpServer::OnNewConnection(SOCKET sockfd, const InetAddress& address)
 {
 	char buffer[64];
@@ -39,6 +44,7 @@ void TcpServer::OnNewConnection(SOCKET sockfd, const InetAddress& address)
 	TcpConnectionPtr connection_ptr = std::make_shared<TcpConnection>(loop_, connection_name,
 			sockfd, address);
 	connection_ptr->SetNewMessageCallback(newmessage_callback_);
+	connection_ptr->SetWriteCompleteCallback(write_complete_callback_);
 	connection_ptr->SetConnectionCallback(connection_callback_);
 	connection_ptr->SetConnectionCloseCallback(std::bind(&TcpServer::OnCloseConnection,this, _1));
 

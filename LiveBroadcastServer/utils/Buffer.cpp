@@ -90,19 +90,20 @@ size_t Buffer::GetSumWrite() const
 size_t Buffer::AppendData(const char* data, size_t length)
 {
 	AdjustBuffer();
-	size_t result = std::min(length, WritableLength());
-	memcpy(WriteBegin(), data, result);
-	AddWriteIndex(result);
-	return result;
+	if (length > WritableLength())
+	{
+		size_t remain = length - WritableLength();
+		ReSize(buffer_.size() + remain);
+	}
+
+	memcpy(WriteBegin(), data, length);
+	AddWriteIndex(length);
+	return length;
 }
 
-size_t Buffer::AppendData(const std::string* data)
+size_t Buffer::AppendData(const std::string& data)
 {
-	if (!data)
-	{
-		return 0;
-	}
-	return AppendData(data->data(), data->length());
+	return AppendData(data.data(), data.length());
 }
 
 ssize_t Buffer::ReadFromSockfd(SOCKET sockfd)

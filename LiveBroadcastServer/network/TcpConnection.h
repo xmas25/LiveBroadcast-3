@@ -42,6 +42,7 @@ public:
 	 * @param callback
 	 */
 	void SetConnectionCallback(const ConnectionCallback& callback);
+	void SetWriteCompleteCallback(const WriteCompleteCallback & callback);
 	void SetConnectionCloseCallback(const ConnectionCallback& callback);
 
 	const std::string& GetConnectionName() const;
@@ -52,13 +53,19 @@ public:
 
 	bool Connected() const;
 
-	ssize_t Send(const char* data, size_t length);
+	void Send(const char* data, size_t length);
 
-	ssize_t Send(const Buffer* buffer);
+	void Send(const Buffer* buffer);
 
-	ssize_t Send(const std::string& data);
+	void Send(const std::string& data);
 
-	ssize_t Send(const uint8_t * data, size_t length);
+	void Send(const uint8_t * data, size_t length);
+
+	/**
+	 * 是否存在未发送的数据
+	 * @return true 存在未发送的数据待发送 false 不存在
+	 */
+	bool HasRemainData() const;
 private:
 	enum Status {DISCONNECTING, DISCONNECTED, CONNECTING, CONNECTED};
 
@@ -75,12 +82,15 @@ private:
 
 	ConnectionCallback connection_callback_;
 	ConnectionCallback connection_close_callback_;
+	WriteCompleteCallback write_complete_callback_;
 	NewMessageCallback newmessage_callback_;
 
 	Buffer recv_buffer_;
+	Buffer send_buffer_;
 
 	void OnReadable();
 
+	void OnWritable();
 	/**
 	 * 关闭连接
 	 */

@@ -77,10 +77,27 @@ void Channel::SetReadableCallback(const EventCallback& cb)
 	readable_callback_ = cb;
 }
 
+void Channel::SetWritableCallback(const EventCallback& cb)
+{
+	writable_callback_ = cb;
+}
+
 void Channel::EnableReadable()
 {
     ep_event_ |= XEPOLLIN;
     Update();
+}
+
+void Channel::EnableWritable()
+{
+	ep_event_ |= XEPOLLOUT;
+	Update();
+}
+
+void Channel::DisableWritable()
+{
+	ep_event_ &= ~XEPOLLOUT;
+	Update();
 }
 
 void Channel::Update()
@@ -110,4 +127,17 @@ void Channel::HandleEvent()
 			readable_callback_();
 		}
 	}
+
+	if (event_ & XEPOLLOUT)
+	{
+		if (writable_callback_)
+		{
+			writable_callback_();
+		}
+	}
+}
+
+bool Channel::IsWriting() const
+{
+	return event_ & XEPOLLOUT;
 }

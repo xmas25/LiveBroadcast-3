@@ -29,11 +29,19 @@ public:
 
 	void SetReadableCallback(const EventCallback& cb);
 
+	void SetWritableCallback(const EventCallback& cb);
+
 	void EnableReadable();
+
+	void EnableWritable();
+
+	void DisableWritable();
 
 	void DisableAll();
 
 	void TieConnection(const std::shared_ptr<void>& connection_tie);
+
+	bool IsWriting() const;
 private:
 	EventLoop* loop_;
 
@@ -41,10 +49,13 @@ private:
 
 	SOCKET fd_;
 	ChannelStatus channel_status_;
+	/* 多路复用返回的事件*/
 	uint32_t event_;
+	/* 用于注册的事件*/
 	uint32_t ep_event_;
 
 	EventCallback readable_callback_;
+	EventCallback writable_callback_;
 
 	std::weak_ptr<void> tie_;
 	bool tied_;

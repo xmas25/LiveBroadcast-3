@@ -48,7 +48,7 @@ public:
 
 	size_t AppendData(const char* data, size_t length);
 
-	size_t AppendData(const std::string* data);
+	size_t AppendData(const std::string& data);
 
 	size_t AppendData(const Buffer* buffer);
 

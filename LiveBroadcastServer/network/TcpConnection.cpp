@@ -10,7 +10,8 @@ TcpConnection::TcpConnection(EventLoop* loop, const std::string& connection_name
 		channel_(loop, connection_name, sockfd),
 		address_(address)
 {
-	channel_.SetReadableCallback(std::bind(&TcpConnection::OnReadable, this));
+	channel_.SetReadableCallback([this] { OnReadable(); });
+	channel_.SetWritableCallback([this] { OnWritable(); });
 }
 
 TcpConnection::~TcpConnection()
@@ -37,6 +38,11 @@ void TcpConnection::SetConnectionCallback(const ConnectionCallback& callback)
 	connection_callback_ = callback;
 }
 
+void TcpConnection::SetWriteCompleteCallback(const WriteCompleteCallback& callback)
+{
+	write_complete_callback_ = callback;
+}
+
 void TcpConnection::OnReadable()
 {
 	ssize_t result = recv_buffer_.ReadFromSockfd(sockfd_.GetSockFd());
@@ -59,6 +65,43 @@ void TcpConnection::OnReadable()
 	else
 	{
 		LOG_INFO("TcpConnection::OnReadable, error: %s", GetLastErrorAsString().c_str());
+	}
+}
+
+void TcpConnection::OnWritable()
+{
+	if (channel_.IsWriting())
+	{
+		ssize_t send_size = sockfd_.Send(send_buffer_.ReadBegin(), send_buffer_.ReadableLength());
+
+		if (send_size > 0)
+		{
+			send_buffer_.AddReadIndex(send_size);
+
+			if (send_buffer_.ReadableLength() == 0)
+			{
+				channel_.DisableWritable();
+				if (write_complete_callback_)
+				{
+					write_complete_callback_(shared_from_this());
+				}
+				/**
+				 * 写结束 如果当前连接正在关闭 则可以关闭写连接
+				 */
+				if (connection_status_ == DISCONNECTING)
+				{
+					Shutdown();
+				}
+			}
+		}
+		else
+		{
+			LOG_ERROR("TcpConnection::OnWritable send error when writing");
+		}
+	}
+	else
+	{
+		LOG_WARN("TcpConnection::OnWritable not writing");
 	}
 }
 
@@ -96,22 +139,82 @@ bool TcpConnection::Connected() const
 	return connection_status_ == CONNECTED;
 }
 
-ssize_t TcpConnection::Send(const char* data, size_t length)
+void TcpConnection::Send(const char* data, size_t length)
 {
-	return sockfd_.Send(data, length);
+	if (connection_status_ == DISCONNECTED || connection_status_ == DISCONNECTING)
+	{
+		LOG_WARN("disconnected, give up send");
+		return;
+	}
+
+	bool send_fatal_error = false;
+	ssize_t send_size = 0;
+	size_t remain = length;
+	/**
+	 * 当前不存在未写完的数据则可以直接发送 否则Append到发送缓冲区
+	 */
+	if (!channel_.IsWriting() && send_buffer_.ReadableLength() == 0)
+	{
+		send_size = sockfd_.Send(data, length);
+		if (send_size > 0)
+		{
+			remain -= send_size;
+			if (remain == 0)
+			{
+				if (write_complete_callback_)
+				{
+					write_complete_callback_(shared_from_this());
+				}
+			}
+		}
+		else
+		{
+			/**
+			 * EWOULDBLOCK 数据未发送出去 但是并不是致命错误
+			 * 可以将数据拷贝到发送缓冲区 等待发送
+			 */
+			send_size = 0;
+			if (errno != EWOULDBLOCK)
+			{
+				/**
+				 * 两个非常常见的致命错误
+				 * EPIPE 向关闭的连接写入数据
+				 * ECONNRESET 对端关闭连接
+				 */
+				if (errno == EPIPE || errno == ECONNRESET)
+				{
+					send_fatal_error = true;
+					Shutdown();
+				}
+			}
+		}
+	}
+
+	assert(remain <= length);
+	/**
+	 * 未发生致命错误且数据未发送完毕
+	 */
+	if (!send_fatal_error && remain > 0)
+	{
+		send_buffer_.AppendData(&data[send_size], remain);
+		if (!channel_.IsWriting())
+		{
+			channel_.EnableWritable();
+		}
+	}
 }
 
-ssize_t TcpConnection::Send(const uint8_t* data, size_t length)
+void TcpConnection::Send(const uint8_t* data, size_t length)
 {
 	return Send(reinterpret_cast<const char*>(data), length);
 }
 
-ssize_t TcpConnection::Send(const Buffer* buffer)
+void TcpConnection::Send(const Buffer* buffer)
 {
 	return Send(buffer->ReadBegin(), buffer->ReadableLength());
 }
 
-ssize_t TcpConnection::Send(const std::string& data)
+void TcpConnection::Send(const std::string& data)
 {
 	return Send(data.c_str(), data.length());
 }
@@ -120,6 +223,18 @@ void TcpConnection::Shutdown()
 {
 	if (connection_status_ == CONNECTED)
 	{
-		sockfd_.ShutdownWrite();
+		/**
+		 * 标记连接为正在关闭 但存在未写完的数据 等写完后再关闭写连接
+		 */
+		connection_status_ = DISCONNECTING;
+		if (!channel_.IsWriting())
+		{
+			sockfd_.ShutdownWrite();
+		}
 	}
+}
+
+bool TcpConnection::HasRemainData() const
+{
+	return send_buffer_.ReadableLength() != 0;
 }
