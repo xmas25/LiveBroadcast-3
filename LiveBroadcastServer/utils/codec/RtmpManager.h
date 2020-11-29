@@ -47,6 +47,8 @@ public:
 
 	ShakeHandPackType ParseShakeHand(Buffer* buffer);
 
+	size_t GetParsedLength() const;
+
 private:
 
 	ParseStatus parsed_status_;

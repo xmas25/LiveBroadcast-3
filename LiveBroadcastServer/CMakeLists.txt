@@ -19,7 +19,9 @@ set(NETWORK_SRCS
 		network/multiplexing/Epoll.cpp
 		network/multiplexing/MultiplexingBase.cpp
 		network/multiplexing/Select.cpp
-		network/PlatformNetwork.cpp network/PlatformNetwork.h)
+		network/PlatformNetwork.cpp
+		network/protocol/RtmpConnection.cpp
+		)
 
 set(NETWORK_HEADERS
 		network/TcpServer.h
@@ -35,6 +37,8 @@ set(NETWORK_HEADERS
 		network/multiplexing/Epoll.h
 		network/multiplexing/MultiplexingBase.h
 		network/multiplexing/Select.h
+		network/PlatformNetwork.h
+		network/protocol/RtmpConnection.h
 		)
 
 set(UTILS_SRCS

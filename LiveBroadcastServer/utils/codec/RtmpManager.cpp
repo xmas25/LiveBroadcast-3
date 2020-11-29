@@ -444,3 +444,8 @@ ssize_t RtmpManager::ParseHeaderAndBody(Buffer* buffer, RtmpPack* rtmp_pack)
 		return parse;
 	}
 }
+
+size_t RtmpManager::GetParsedLength() const
+{
+	return parsed_length_;
+}
