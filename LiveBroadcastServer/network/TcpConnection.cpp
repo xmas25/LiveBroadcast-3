@@ -58,8 +58,8 @@ void TcpConnection::OnReadable()
 	}
 	else
 	{
-		abort();
-
+		LOG_INFO("TcpConnection::OnReadable, error: %s", GetLastErrorAsString().c_str());
+		CloseConnection();
 	}
 }
 
@@ -105,4 +105,14 @@ ssize_t TcpConnection::Send(const char* data, size_t length)
 ssize_t TcpConnection::Send(const uint8_t* data, size_t length)
 {
 	return Send(reinterpret_cast<const char*>(data), length);
+}
+
+ssize_t TcpConnection::Send(const Buffer* buffer)
+{
+	return Send(buffer->ReadBegin(), buffer->ReadableLength());
+}
+
+ssize_t TcpConnection::Send(const std::string& data)
+{
+	return Send(data.c_str(), data.length());
 }

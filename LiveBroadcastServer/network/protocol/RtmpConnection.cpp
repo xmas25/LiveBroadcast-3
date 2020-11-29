@@ -178,3 +178,7 @@ void RtmpConnection::OnBodyData(const TcpConnectionPtr& connection_ptr, Buffer* 
 	ParseData(buffer);
 }
 
+const std::vector<FlvTag*>* RtmpConnection::GetFlvTagVector() const
+{
+	return flv_tag_vector_;
+}

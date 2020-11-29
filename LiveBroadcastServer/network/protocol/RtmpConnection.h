@@ -36,7 +36,7 @@ public:
 	const Buffer* GetHeaderDataBuffer();
 
 	/**
-	 * 用于握手的回调函数
+	 * 用于握手的回调函数  握手成功后自动切换为OnBodyData 处理真正的数据
 	 * @param connection_ptr
 	 * @param buffer
 	 * @param timestamp
@@ -51,6 +51,7 @@ public:
 	 */
 	void OnBodyData(const TcpConnectionPtr& connection_ptr, Buffer* buffer, Timestamp timestamp);
 
+	const std::vector<FlvTag*>* GetFlvTagVector() const;
 private:
 
 	TcpConnectionPtr connection_ptr_;

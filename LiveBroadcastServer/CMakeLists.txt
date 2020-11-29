@@ -49,7 +49,9 @@ set(UTILS_SRCS
 		utils/Buffer.cpp
 		utils/File.cpp
 		utils/Timestamp.cpp
-		utils/Logger.cpp utils/Logger.h)
+		utils/Logger.cpp
+		utils/Format.cpp
+		)
 
 set(UTILS_HEADERS
 		utils/codec/FlvManager.h
@@ -59,6 +61,8 @@ set(UTILS_HEADERS
 		utils/Buffer.h
 		utils/File.h
 		utils/Timestamp.h
+		utils/Logger.h
+		utils/Format.cpp
 )
 
 # 后续会修改为模块化 因为过早模块化 会导致每次修改代码后需要rebuild才能更新 故临时使用这种方式

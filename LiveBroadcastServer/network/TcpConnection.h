@@ -56,6 +56,10 @@ public:
 
 	ssize_t Send(const char* data, size_t length);
 
+	ssize_t Send(const Buffer* buffer);
+
+	ssize_t Send(const std::string& data);
+
 	ssize_t Send(const uint8_t * data, size_t length);
 private:
 	enum Status {DISCONNECTING, DISCONNECTED, CONNECTING, CONNECTED};
