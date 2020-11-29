@@ -23,8 +23,15 @@ void OnConnection(const TcpConnectionPtr& connection_ptr)
 {
 	if (connection_ptr->Connected())
 	{
-		rtmp_connection_map[connection_ptr->GetConnectionName()] = new RtmpConnection(connection_ptr);
-		
+		RtmpConnection* rtmp_connection = new RtmpConnection(connection_ptr);
+		rtmp_connection_map[connection_ptr->GetConnectionName()] = rtmp_connection;
+
+		connection_ptr->SetNewMessageCallback(
+				[rtmp_connection](auto && PH1, auto && PH2, auto && PH3)
+				{
+					rtmp_connection->OnConnectionShakeHand(PH1, PH2, PH3);
+				});
+
 		LOG_INFO("connection: %s start shake hand", connection_ptr->GetConnectionName().c_str());
 	}
 	else
@@ -37,56 +44,16 @@ void OnConnection(const TcpConnectionPtr& connection_ptr)
 	}
 }
 
-void OnNewMessage(const TcpConnectionPtr& connection_ptr, Buffer* buffer, Timestamp timestamp)
-{
-	RtmpConnection* rtmp_manager = rtmp_connection_map[connection_ptr->GetConnectionName()];
-
-	rtmp_manager->ParseData(buffer);
-}
-
-void OnConnectionShakeHand(const TcpConnectionPtr& connection_ptr, Buffer* buffer, Timestamp timestamp)
-{
-	RtmpConnection* rtmp_manager = rtmp_connection_map[connection_ptr->GetConnectionName()];
-
-	RtmpConnection::ShakeHandResult result = rtmp_manager->ShakeHand(buffer);
-	switch (result)
-	{
-		case RtmpConnection::SHAKE_SUCCESS:
-		{
-			connection_ptr->SetNewMessageCallback(OnNewMessage);
-			LOG_INFO("connection: %s shake hand success",
-					connection_ptr->GetConnectionName().c_str());
-			/**
-			 * 握手成功时返回
-			 */
-			return;
-		}
-		case RtmpConnection::SHAKE_FAILED:
-		{
-			LOG_WARN("connection: %s shake hand failed",
-					connection_ptr->GetConnectionName().c_str());
-			connection_ptr->CloseConnection();
-			/**
-			 * 出错时返回
-			 */
-			return;
-		}
-		case RtmpConnection::SHAKE_DATA_NOT_ENOUGH:
-			/**
-			 * 数据不足时返回
-			 */
-			return;
-	}
-}
-
 int main()
 {
 	EventLoop loop;
-	InetAddress address(4000, true);
-	TcpServer server(&loop, "main_server", address);
-	server.SetConnectionCallback(OnConnection);
-	server.SetNewMessageCallback(OnConnectionShakeHand);
-	server.Start();
+	InetAddress main_server_address(4000, true);
+	InetAddress client_server_address(4100, true);
+	TcpServer main_server(&loop, "main_server", main_server_address);
+	// TcpServer client_server(&loop, "client_server", client_server_address);
+
+	main_server.SetConnectionCallback(OnConnection);
+	main_server.Start();
 
 	loop.Loop();
 }

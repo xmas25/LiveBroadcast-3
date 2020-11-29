@@ -7,7 +7,11 @@
 
 RtmpConnection::RtmpConnection(const TcpConnectionPtr& connection_ptr) :
 		connection_ptr_(connection_ptr),
-		last_write_size_(0)
+		rtmp_manager_(),
+		flv_manager_(rtmp_manager_.GetFlvManager()),
+		last_write_size_(0),
+		header_buffer_(),
+		flv_tag_vector_(flv_manager_->GetFlvTags())
 {
 
 }
@@ -121,3 +125,56 @@ void RtmpConnection::DebugParseSize(size_t division)
 				rtmp_manager_.GetParsedLength());
 	}
 }
+
+const Buffer* RtmpConnection::GetHeaderDataBuffer()
+{
+	if (header_buffer_.ReadableLength() == 0)
+	{
+		flv_manager_->EncodeHeadersToBuffer(&header_buffer_);
+	}
+	return &header_buffer_;
+}
+
+void RtmpConnection::OnConnectionShakeHand(const TcpConnectionPtr& connection_ptr, Buffer* buffer, Timestamp timestamp)
+{
+	RtmpConnection::ShakeHandResult result = ShakeHand(buffer);
+	switch (result)
+	{
+		case RtmpConnection::SHAKE_SUCCESS:
+		{
+			connection_ptr->SetNewMessageCallback(
+					[this](auto&& PH1, auto&& PH2, auto&& PH3)
+					{
+						OnBodyData(PH1, PH2, PH3);
+					}
+					);
+			LOG_INFO("connection: %s shake hand success",
+					connection_ptr->GetConnectionName().c_str());
+			/**
+			 * 握手成功时返回
+			 */
+			return;
+		}
+		case RtmpConnection::SHAKE_FAILED:
+		{
+			LOG_WARN("connection: %s shake hand failed",
+					connection_ptr->GetConnectionName().c_str());
+			connection_ptr->CloseConnection();
+			/**
+			 * 出错时返回
+			 */
+			return;
+		}
+		case RtmpConnection::SHAKE_DATA_NOT_ENOUGH:
+			/**
+			 * 数据不足时返回
+			 */
+			return;
+	}
+}
+
+void RtmpConnection::OnBodyData(const TcpConnectionPtr& connection_ptr, Buffer* buffer, Timestamp timestamp)
+{
+	ParseData(buffer);
+}
+
