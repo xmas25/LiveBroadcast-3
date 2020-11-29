@@ -20,6 +20,8 @@ namespace socketops
 	SOCKET Accept(SOCKET sockfd, struct sockaddr* address);
 
 	ssize_t Send(SOCKET sockfd, const char* data, size_t length);
+
+	void ShutdownWrite(int sockfd);
 }
 
 #endif // !NETWORK_SOCKETOPS

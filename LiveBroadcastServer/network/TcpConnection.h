@@ -32,10 +32,6 @@ public:
 	void Established();
 
 	/**
-	 * 关闭连接
-	 */
-	void CloseConnection();
-	/**
 	 * 设置新消息回调 当次Tcp连接有新的数据到达时 调用此回调
 	 * @param callback
 	 */
@@ -49,6 +45,8 @@ public:
 	void SetConnectionCloseCallback(const ConnectionCallback& callback);
 
 	const std::string& GetConnectionName() const;
+
+	void Shutdown();
 
 	SOCKET GetSockfd() const;
 
@@ -82,6 +80,11 @@ private:
 	Buffer recv_buffer_;
 
 	void OnReadable();
+
+	/**
+	 * 关闭连接
+	 */
+	void OnClose();
 };
 
 #endif // !NETWORK_TCPCONNECTION_H

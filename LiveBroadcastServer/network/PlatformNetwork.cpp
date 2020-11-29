@@ -4,6 +4,7 @@
 
 #include "PlatformNetwork.h"
 
+#ifdef _WIN32
 NetworkInitializer::NetworkInitializer()
 {
 	WORD version = MAKEWORD(2, 2);
@@ -15,9 +16,11 @@ NetworkInitializer::~NetworkInitializer()
 {
 	::WSACleanup();
 }
+#endif
 
 std::string GetLastErrorAsString()
 {
+#ifdef _WIN32
 	//Get the error message, if any.
 	DWORD errorMessageID = ::GetLastError();
 	if(errorMessageID == 0)
@@ -31,8 +34,10 @@ std::string GetLastErrorAsString()
 
 	//Free the buffer.
 	LocalFree(messageBuffer);
-
 	return message;
+#else
+	return strerror(errno);
+#endif
 }
 
 

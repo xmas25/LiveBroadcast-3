@@ -12,7 +12,7 @@ std::string Format::ToHexString(size_t decimal_num)
 	return stream.str();
 }
 
-std::string Format::ToHexStringWithRN(size_t decimal_num)
+std::string Format::ToHexStringWithCrlf(size_t decimal_num)
 {
 	return ToHexString(decimal_num) + "\r\n";
 }

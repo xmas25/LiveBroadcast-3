@@ -3,6 +3,7 @@
 #include <iostream>
 #include <unistd.h>
 #include <ctime>
+#include <signal.h>
 
 #include "network/TcpServer.h"
 #include "network/EventLoop.h"
@@ -15,7 +16,7 @@
 NetworkInitializer init;
 #endif
 
-std::string ROOT = R"(C:\Users\rjd67\Desktop\Server\)";
+std::string ROOT = R"(/root/server/)";
 std::string FILE_PREFIX = ".flv";
 
 std::map<std::string, RtmpConnection*> rtmp_connection_map;
@@ -51,11 +52,11 @@ void OnConnection(const TcpConnectionPtr& connection_ptr)
 }
 
 std::string response_header = "HTTP/1.1 200 OK\r\n"
-							  "Server: ⁄(⁄ ⁄•⁄ω⁄•⁄ ⁄)⁄\r\n"
+							  "Server: MC_VCLOUD_LIVE\r\n"
+							  "Date: Sun, 29 Nov 2020 09:02:15 GMT\r\n"
 							  "Content-Type: video/x-flv\r\n"
 							  "Transfer-Encoding: chunked\r\n"
-							  "Connection: keep-alive\r\n"
-							  "\r\n";
+							  "Connection: keep-alive\r\n\r\n";
 
 void OnConnectionClientServer(const TcpConnectionPtr& connection_ptr)
 {
@@ -66,7 +67,7 @@ void OnConnectionClientServer(const TcpConnectionPtr& connection_ptr)
 		if (rtmp_connection)
 		{
 			const Buffer* buffer = rtmp_connection->GetHeaderDataBuffer();
-			std::string length_rn = Format::ToHexStringWithRN(buffer->ReadableLength());
+			std::string length_rn = Format::ToHexStringWithCrlf(buffer->ReadableLength());
 			connection_ptr->Send(length_rn);
 			connection_ptr->Send(buffer);
 			connection_ptr->Send("\r\n");
@@ -75,7 +76,7 @@ void OnConnectionClientServer(const TcpConnectionPtr& connection_ptr)
 			for (const auto& tag : tags)
 			{
 				size_t tag_size = FlvTag::FLV_TAG_HEADER_LENGTH + tag->GetBody()->ReadableLength();
-				length_rn = Format::ToHexStringWithRN(tag_size);
+				length_rn = Format::ToHexStringWithCrlf(tag_size);
 				connection_ptr->Send(length_rn);
 
 				connection_ptr->Send(tag->GetHeader(), FlvTag::FLV_TAG_HEADER_LENGTH);
@@ -90,12 +91,13 @@ void OnConnectionClientServer(const TcpConnectionPtr& connection_ptr)
 			}
 		}
 		connection_ptr->Send("0\r\n\r\n");
-		connection_ptr->CloseConnection();
+		connection_ptr->Shutdown();
 	}
 }
 
 int main()
 {
+	signal(SIGPIPE, SIG_IGN);
 	EventLoop loop;
 	InetAddress main_server_address(4000, true);
 	InetAddress client_server_address(4100, true);

@@ -20,6 +20,6 @@ namespace Format
 	 * @param decimal_num 如10
 	 * @return "a\r\n"
 	 */
-	std::string ToHexStringWithRN(size_t decimal_num);
+	std::string ToHexStringWithCrlf(size_t decimal_num);
 }
 #endif //LIVEBROADCASTSERVER_FORMAT_H

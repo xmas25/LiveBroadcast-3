@@ -54,12 +54,11 @@ void TcpConnection::OnReadable()
 		 * 首先断开channel和多路复用的连接
 		 * 然后断开和TcpServer的连接
 		 */
-		CloseConnection();
+		OnClose();
 	}
 	else
 	{
 		LOG_INFO("TcpConnection::OnReadable, error: %s", GetLastErrorAsString().c_str());
-		CloseConnection();
 	}
 }
 
@@ -68,7 +67,7 @@ void TcpConnection::SetConnectionCloseCallback(const ConnectionCallback& callbac
 	connection_close_callback_ = callback;
 }
 
-void TcpConnection::CloseConnection()
+void TcpConnection::OnClose()
 {
 	connection_status_ = DISCONNECTED;
 	channel_.DisableAll();
@@ -115,4 +114,12 @@ ssize_t TcpConnection::Send(const Buffer* buffer)
 ssize_t TcpConnection::Send(const std::string& data)
 {
 	return Send(data.c_str(), data.length());
+}
+
+void TcpConnection::Shutdown()
+{
+	if (connection_status_ == CONNECTED)
+	{
+		sockfd_.ShutdownWrite();
+	}
 }

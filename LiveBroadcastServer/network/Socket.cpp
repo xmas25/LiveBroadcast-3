@@ -62,3 +62,8 @@ ssize_t Socket::Send(const char* data, size_t length)
 	return socketops::Send(sockfd_, data, length);
 }
 
+void Socket::ShutdownWrite()
+{
+	socketops::ShutdownWrite(sockfd_);
+}
+

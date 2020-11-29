@@ -6,8 +6,9 @@
 #include "network/EventLoop.h"
 #include "utils/Logger.h"
 
+#ifdef _WIN32
 NetworkInitializer init;
-
+#endif
 void OnNewMessage(const TcpConnectionPtr& connection_ptr, Buffer* buffer, Timestamp timestamp)
 {
 	LOG_INFO("OnNewMessage: %s", connection_ptr->GetConnectionName().c_str());

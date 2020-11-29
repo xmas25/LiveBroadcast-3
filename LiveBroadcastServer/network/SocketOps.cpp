@@ -25,8 +25,9 @@ void socketops::Listen(SOCKET sockfd)
 void socketops::SetReusePort(SOCKET sockfd)
 {
 #ifdef _WIN32
-#else
 	char on = 1;
+#else
+	int on = 1;
 	int ret = ::setsockopt(sockfd, SOL_SOCKET, SO_REUSEPORT, &on,
 		static_cast<socklen_t>(sizeof on));
 	assert(ret != -1);
@@ -35,7 +36,11 @@ void socketops::SetReusePort(SOCKET sockfd)
 
 void socketops::SetReuseAddr(SOCKET sockfd)
 {
-	char on = 1;
+#ifdef _WIN32
+	char on = 1
+#else
+	int on = 1;
+#endif
 	int ret = ::setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &on,
 		static_cast<socklen_t>(sizeof on));
 	assert(ret != -1);
@@ -59,4 +64,9 @@ SOCKET socketops::Accept(SOCKET sockfd, struct sockaddr* address)
 ssize_t socketops::Send(SOCKET sockfd, const char* data, size_t length)
 {
 	return send(sockfd, data, length, 0);
+}
+
+void socketops::ShutdownWrite(int sockfd)
+{
+	::shutdown(sockfd, SHUT_WR);
 }

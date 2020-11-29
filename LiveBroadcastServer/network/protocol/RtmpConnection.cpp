@@ -159,7 +159,7 @@ void RtmpConnection::OnConnectionShakeHand(const TcpConnectionPtr& connection_pt
 		{
 			LOG_WARN("connection: %s shake hand failed",
 					connection_ptr->GetConnectionName().c_str());
-			connection_ptr->CloseConnection();
+			connection_ptr->Shutdown();
 			/**
 			 * 出错时返回
 			 */

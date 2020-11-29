@@ -29,10 +29,12 @@ enum EVENTS
 #define XEPOLLET XEPOLLET
 };
 
+#include <string>
+std::string GetLastErrorAsString();
+
 #ifdef _WIN32
 #include <winsock2.h>
 #include <ws2tcpip.h>
-#include <string>
 #include <windows.h>
 
 class NetworkInitializer
@@ -42,8 +44,6 @@ public:
 	~NetworkInitializer();
 };
 
-std::string GetLastErrorAsString();
-
 int write(SOCKET s, const uint8_t *buf, int len);
 
 int read(SOCKET s, char *buf, int len);
@@ -52,6 +52,8 @@ int read(SOCKET s, char *buf, int len);
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
+#include <cerrno>
+#include <cstring>
 
 #define SOCKET int
 #endif

@@ -6,7 +6,7 @@
 #include <sys/epoll.h>
 
 #include "network/multiplexing/MultiplexingBase.h"
-#include "network/Callback.h"
+#include "network/PlatformNetwork.h"
 
 class Epoll : public MultiplexingBase
 {

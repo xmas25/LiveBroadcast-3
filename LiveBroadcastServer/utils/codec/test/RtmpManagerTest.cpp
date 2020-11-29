@@ -45,9 +45,9 @@ int main()
 		write_bytes = file_write.Write(tag->GetHeader(), FlvTag::FLV_TAG_HEADER_LENGTH);
 		assert(write_bytes == FlvTag::FLV_TAG_HEADER_LENGTH);
 
-		const std::string* body = tag->GetBody()->GetBody();
-		write_bytes = file_write.Write(body->data(), body->length());
-		assert(write_bytes == static_cast<ssize_t>(body->length()));
+		const Buffer* body = tag->GetBody();
+		write_bytes = file_write.Write(body);
+		assert(write_bytes == static_cast<ssize_t>(body->ReadableLength()));
 	}
 
 	return 0;

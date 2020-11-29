@@ -13,8 +13,9 @@
 
 #else
 #define CRLF "\n"
-#define DELIMITER "/"
+#define DELIMITER '/'
 
+#include <sys/socket.h>
 #define SOCKET int
 #endif
 
