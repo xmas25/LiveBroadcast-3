@@ -71,19 +71,19 @@ uint32_t FlvTag::GetPreviousTagSize() const
 			previous_tag_size[0];
 }
 
-uint32_t FlvTag::GetTagSize() const
+uint32_t FlvTag::GetCurrentTagSize() const
 {   /*长度部分 除去previous_tag_size_ 附加data长度*/
 	return FLV_TAG_HEADER_LENGTH - 4 + GetDataSize();
 }
 
-uint32_t FlvTag::GetCurrentDataSize() const
+uint32_t FlvTag::GetBodyDataLength() const
 {
 	return body_.ReadableLength();
 }
 
 uint32_t FlvTag::GetRemainDataSize() const
 {
-	return GetDataSize() - GetCurrentDataSize();
+	return GetDataSize() - GetBodyDataLength();
 }
 
 void FlvTag::AppendData(const char* data, size_t length)

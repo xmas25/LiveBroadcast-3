@@ -80,7 +80,9 @@ public:
 
 	RtmpPackType GetRtmpPackType() const;
 
-	uint32_t GetDataSize() const;
+	uint32_t GetBodyDataSize() const;
+
+	void SetBodyDataSize(uint32_t data_size);
 
 	const uint8_t* GetDataSizePtr() const;
 
@@ -94,13 +96,13 @@ public:
 	 * @brief 获取缺少的data字节数
 	 * @return
 	*/
-	uint32_t GetRemainDataSize() const;
+	uint32_t GetBodyRemainSize() const;
 
 	/**
 	 * @brief 获取现在已经保存的的data_长度
 	 * @return
 	*/
-	uint32_t GetCurrentDataSize() const;
+	uint32_t GetBodyCurrentSize() const;
 
 	/**
 	 * @brief 追加data数据

@@ -50,8 +50,8 @@ void OnConnection(const TcpConnectionPtr& connection_ptr)
 		File file_write(ROOT + std::to_string(t) + FILE_PREFIX, File::O_WRONLY);
 		rtmp_manager->WriteToFile(&file_write);
 
-		delete rtmp_connection;
-		rtmp_connection = nullptr;
+		// delete rtmp_connection;
+		// rtmp_connection = nullptr;
 	}
 }
 
@@ -98,24 +98,30 @@ std::string response_header = "HTTP/1.1 200 OK\r\n"
 							  "Connection: keep-alive\r\n\r\n";
 void OnNewClientMessage(const TcpConnectionPtr& connection_ptr, Buffer* buffer, Timestamp timestamp)
 {
-	if (connection_ptr->Connected())
+	LOG_INFO("connection: %s, send\n%s", connection_ptr->GetConnectionName().c_str(),
+			buffer->ReadAllAsString().c_str());
+
+	if (rtmp_connection)
 	{
-		/**
-		 *发送HTTP头和 FlV数据的头部
-		 */
+		if (connection_ptr->Connected())
+		{
+			/**
+			 *发送HTTP头和 FlV数据的头部
+			 */
 
-		send_sub_map[connection_ptr->GetConnectionName()] = 0;
+			send_sub_map[connection_ptr->GetConnectionName()] = 0;
 
-		const Buffer* header_buffer = rtmp_connection->GetHeaderDataBuffer();
-		std::string length_rn = Format::ToHexStringWithCrlf(header_buffer->ReadableLength());
+			const Buffer* header_buffer = rtmp_connection->GetHeaderDataBuffer();
+			std::string length_rn = Format::ToHexStringWithCrlf(header_buffer->ReadableLength());
 
-		Buffer send_buffer;
-		send_buffer.AppendData(response_header);
-		send_buffer.AppendData(length_rn);
-		send_buffer.AppendData(header_buffer);
-		send_buffer.AppendData("\r\n");
+			Buffer send_buffer;
+			send_buffer.AppendData(response_header);
+			send_buffer.AppendData(length_rn);
+			send_buffer.AppendData(header_buffer);
+			send_buffer.AppendData("\r\n");
 
-		connection_ptr->Send(&send_buffer);
+			connection_ptr->Send(&send_buffer);
+		}
 	}
 }
 int main()

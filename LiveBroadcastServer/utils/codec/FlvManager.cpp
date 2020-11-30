@@ -144,7 +144,7 @@ void FlvManager::PushBackFlvTagAndSetPreviousSize(FlvTag* flv_tag)
 	}
 	else
 	{
-		flv_tag->SetPreviousTagSize(last_tag_->GetTagSize()
+		flv_tag->SetPreviousTagSize(last_tag_->GetCurrentTagSize()
 		);
 	}
 	flv_tags_.push_back(flv_tag);
@@ -155,8 +155,8 @@ void FlvManager::PushBackFlvTagAndSetPreviousSize(FlvTag* flv_tag)
 
 ssize_t FlvManager::EncodeHeadersToBuffer(Buffer* buffer)
 {
-	uint32_t data_length = FlvHeader::FLV_HEADER_LENGTH + script_tag_.GetTagSize() + 4
-						   + video_audio_tags[0].GetTagSize() + 4 + video_audio_tags[1].GetTagSize() + 4;
+	uint32_t data_length = FlvHeader::FLV_HEADER_LENGTH + script_tag_.GetCurrentTagSize() + 4
+						   + video_audio_tags[0].GetCurrentTagSize() + 4 + video_audio_tags[1].GetCurrentTagSize() + 4;
 
 	if (buffer->WritableLength() < data_length)
 	{
@@ -169,6 +169,10 @@ ssize_t FlvManager::EncodeHeadersToBuffer(Buffer* buffer)
 
 	buffer->AppendData(script_tag_.GetHeader(), FlvTag::FLV_TAG_HEADER_LENGTH);
 	buffer->AppendData(script_tag_.GetBody());
+
+	video_audio_tags[0].SetPreviousTagSize(script_tag_.GetCurrentTagSize());
+	video_audio_tags[1].SetPreviousTagSize(video_audio_tags[0].GetCurrentTagSize());
+	flv_tags_[0]->SetPreviousTagSize(video_audio_tags[1].GetCurrentTagSize());
 
 	for (int i = 0; i < 2; ++i)
 	{
@@ -282,7 +286,7 @@ ssize_t FlvManager::ParseTagHeader(FlvTag* tag)
 ssize_t FlvManager::ParseTagData(FlvTag* tag)
 {
 	size_t data_size = tag->GetDataSize();
-	size_t remain_size = data_size - tag->GetCurrentDataSize();
+	size_t remain_size = data_size - tag->GetBodyDataLength();
 	size_t buffer_size = buffer_.ReadableLength();
 
 	if (remain_size <= buffer_size)
@@ -311,7 +315,7 @@ bool FlvManager::CheckTag()
 
 	/* Flv文件中 previous_tag_size为上一个Tag的长度 用于校验 相等则正确 否则校验失败*/
 
-	uint32_t tag_size = last_tag_->GetTagSize();
+	uint32_t tag_size = last_tag_->GetCurrentTagSize();
 	uint32_t previous_tag_size = current_tag_->GetPreviousTagSize();
 
 	if (tag_size != previous_tag_size)

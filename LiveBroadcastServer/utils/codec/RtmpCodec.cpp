@@ -155,12 +155,20 @@ void RtmpPack::SetPackType(uint8_t type)
 	}
 }
 
-uint32_t RtmpPack::GetDataSize() const
+uint32_t RtmpPack::GetBodyDataSize() const
 {
 	/*
 	 *data_size为三个字节的十六进制数据
 	*/
 	return data_size_[0] * 65536 + data_size_[1] * 256 + data_size_[2];
+}
+
+void RtmpPack::SetBodyDataSize(uint32_t data_size)
+{
+	uint8_t* data_size_ptr =reinterpret_cast<uint8_t*>(&data_size);
+	data_size_[0] = data_size_ptr[2];
+	data_size_[1] = data_size_ptr[1];
+	data_size_[2] = data_size_ptr[0];
 }
 
 const uint8_t* RtmpPack::GetDataSizePtr() const
@@ -183,19 +191,19 @@ const uint8_t* RtmpPack::GetTimeStamp() const
 	return timestamp_;
 }
 
-uint32_t RtmpPack::GetRemainDataSize() const
+uint32_t RtmpPack::GetBodyRemainSize() const
 {
-	return GetDataSize() - GetCurrentDataSize();
+	return GetBodyDataSize() - GetBodyCurrentSize();
 }
 
-uint32_t RtmpPack::GetCurrentDataSize() const
+uint32_t RtmpPack::GetBodyCurrentSize() const
 {
 	return buffer_.ReadableLength();
 }
 
 void RtmpPack::AppendData(const char* data, size_t length)
 {
-	buffer_.ReSize(GetDataSize());
+	buffer_.ReSize(GetBodyDataSize());
 
 	buffer_.AppendData(data, length);
 }

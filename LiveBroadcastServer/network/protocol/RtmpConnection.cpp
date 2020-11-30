@@ -78,9 +78,8 @@ ssize_t RtmpConnection::WriteToFile(File* file_write)
 	 */
 	FlvManager* flv_manager = rtmp_manager_.GetFlvManager();
 
-	Buffer buffer;
-	flv_manager->EncodeHeadersToBuffer(&buffer);
-	file_write->Write(&buffer);
+	const Buffer* buffer = GetHeaderDataBuffer();
+	file_write->Write(buffer);
 
 
 	/**
@@ -89,7 +88,7 @@ ssize_t RtmpConnection::WriteToFile(File* file_write)
 	std::vector<FlvTag*>* flv_tags = flv_manager->GetFlvTags();
 
 	ssize_t write_bytes;
-	size_t sum_write_bytes = buffer.GetSumWrite();
+	size_t sum_write_bytes = buffer->ReadableLength();
 	for (FlvTag* tag : *flv_tags)
 	{
 		write_bytes = file_write->Write(tag->GetHeader(), FlvTag::FLV_TAG_HEADER_LENGTH);
@@ -98,6 +97,13 @@ ssize_t RtmpConnection::WriteToFile(File* file_write)
 		write_bytes = file_write->Write(tag->GetBody());
 		sum_write_bytes += write_bytes;
 	}
+
+	/**
+	 * 文件尾部为最后一个tag的大小
+	 */
+	uint32_t previous_tag_size = (flv_tags->at(flv_tags->size() - 1))->GetCurrentTagSize();
+	previous_tag_size = htonl(previous_tag_size);
+	file_write->Write((char*)&previous_tag_size, sizeof previous_tag_size);
 
 	LOG_INFO("connection: %s write %zu bytes to %s success",
 			connection_ptr_->GetConnectionName().c_str(),

@@ -95,13 +95,13 @@ public:
 	 * @brief 作用类似GetPreviousTagSize 不过为获取的当前数据包的数据包长度 用于进行校验
 	 * @return
 	*/
-	uint32_t GetTagSize() const;
+	uint32_t GetCurrentTagSize() const;
 
 	/**
 	 * @brief 获取现在已经保存的的data_长度
 	 * @return
 	*/
-	uint32_t GetCurrentDataSize() const;
+	uint32_t GetBodyDataLength() const;
 
 	/**
 	 * @brief 获取缺少的data字节数

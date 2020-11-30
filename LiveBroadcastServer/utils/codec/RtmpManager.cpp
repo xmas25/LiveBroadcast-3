@@ -153,9 +153,14 @@ ssize_t RtmpManager::ParseScriptPack(Buffer* buffer, RtmpPack* script_pack)
 	}
 	else
 	{
-		script_pack->AppendData(buffer->ReadBegin(), script_pack->GetDataSize());
-		buffer->AddReadIndex(script_pack->GetDataSize());
-		result += script_pack->GetDataSize();
+		/**
+		 * 0x10 for obs ...@setDataFrame
+		 */
+		script_pack->SetBodyDataSize(script_pack->GetBodyDataSize() - 0x10);
+		buffer->AddReadIndex(0x10);
+		script_pack->AppendData(buffer->ReadBegin(), script_pack->GetBodyDataSize());
+		buffer->AddReadIndex(script_pack->GetBodyDataSize());
+		result += script_pack->GetBodyDataSize();
 	}
 
 	return result;
@@ -182,7 +187,7 @@ ssize_t RtmpManager::ParseVideoAudio(Buffer* buffer, RtmpPack video_audio_pack[2
 		if (video_audio_pack[i].GetRtmpPackType() == RtmpPack::RTMP_AUDIO ||
 				video_audio_pack[i].GetRtmpPackType() == RtmpPack::RTMP_VIDEO)
 		{
-			size_t data_size = video_audio_pack[i].GetDataSize();
+			size_t data_size = video_audio_pack[i].GetBodyDataSize();
 			video_audio_pack[i].AppendData(buffer->ReadBegin(), data_size);
 			buffer->AddReadIndex(data_size);
 			result += data_size;
@@ -216,7 +221,7 @@ ssize_t RtmpManager::ParseBody(Buffer* buffer)
 {
 	// 只有在读满一个chunk分块4096字节后 返回解析一个新的header的时候
 	// 当remain小于等于RTMP_CHUNK_SIZE的时候说明 此chunk分块结束了
-	if (current_rtmp_pack_.GetRemainDataSize() <=
+	if (current_rtmp_pack_.GetBodyRemainSize() <=
 		RTMP_CHUNK_SIZE && (read_chunk_size_ == 0))
 	{
 		chunk_over_ = true;
@@ -232,7 +237,7 @@ ssize_t RtmpManager::ParseBody(Buffer* buffer, RtmpPack* rtmp_pack, bool chunk_o
 		uint32_t* read_chunk_size, ParseStatus* parsed_status)
 {
 	size_t readable = buffer->ReadableLength();
-	size_t remain = rtmp_pack->GetRemainDataSize();
+	size_t remain = rtmp_pack->GetBodyRemainSize();
 
 	if (chunk_over)
 	{
@@ -253,7 +258,7 @@ ssize_t RtmpManager::ParseBody(Buffer* buffer, RtmpPack* rtmp_pack, bool chunk_o
 			{
 				*parsed_status = RtmpManager::PARSE_RTMP_HEADER;
 			}
-			return rtmp_pack->GetDataSize();
+			return rtmp_pack->GetBodyDataSize();
 		}
 	}
 	else
@@ -283,7 +288,10 @@ ssize_t RtmpManager::ParseBody(Buffer* buffer, RtmpPack* rtmp_pack, bool chunk_o
 
 void RtmpManager::PushBackFlvTag(FlvTag* tag)
 {
-	flv_manager_.PushBackFlvTagAndSetPreviousSize(tag);
+	if (tag->GetTagType() == RtmpPack::RTMP_VIDEO || tag->GetTagType() == RtmpPack::RTMP_AUDIO)
+	{
+		flv_manager_.PushBackFlvTagAndSetPreviousSize(tag);
+	}
 }
 
 RtmpManager::ShakeHandPackType RtmpManager::ParseShakeHand(Buffer* buffer)
@@ -427,7 +435,7 @@ ssize_t RtmpManager::ParseHeaderAndBody(Buffer* buffer, RtmpPack* rtmp_pack)
 	ssize_t parse = ParseHeader(buffer, rtmp_pack);
 	if (parse > 0)
 	{
-		size_t need_length = rtmp_pack->GetDataSize() + parse;
+		size_t need_length = rtmp_pack->GetBodyDataSize() + parse;
 		if (need_length > buffer->ReadableLength())
 		{
 			return 0;
