@@ -21,5 +21,7 @@ namespace Format
 	 * @return "a\r\n"
 	 */
 	std::string ToHexStringWithCrlf(size_t decimal_num);
+
+	std::string GetUrl(const std::string& str);
 }
 #endif //LIVEBROADCASTSERVER_FORMAT_H

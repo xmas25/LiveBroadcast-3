@@ -5,7 +5,7 @@
 #include <cstring>
 #include <cstdlib>
 #include <string>
-
+#include <memory>
 #include "utils/Buffer.h"
 /**
  * 负责Flv文件的编码和解码
@@ -70,7 +70,6 @@ private:
 class FlvTag
 {
 public:
-
 	/**
 	 * @brief FlvTagHeader长度
 	*/
@@ -164,6 +163,7 @@ private:
 	char header_[15];
 	Buffer body_;
 };
+typedef std::shared_ptr<FlvTag> FlvTagPtr;
 
 /**
  * @brief Flv解码器 在FlvTag和FlvHeader基础上进行包装 提供解析功能

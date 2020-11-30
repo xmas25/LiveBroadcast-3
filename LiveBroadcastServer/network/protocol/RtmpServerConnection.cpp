@@ -2,21 +2,21 @@
 // Created by rjd67 on 2020/11/29.
 //
 
-#include "network/protocol/RtmpConnection.h"
+#include "network/protocol/RtmpServerConnection.h"
 #include "utils/Logger.h"
+#include "utils/Format.h"
 
-RtmpConnection::RtmpConnection(const TcpConnectionPtr& connection_ptr) :
+RtmpServerConnection::RtmpServerConnection(const TcpConnectionPtr& connection_ptr) :
 		connection_ptr_(connection_ptr),
 		rtmp_manager_(),
 		flv_manager_(rtmp_manager_.GetFlvManager()),
 		last_write_size_(0),
-		header_buffer_(),
-		flv_tag_vector_(flv_manager_->GetFlvTags())
+		header_buffer_()
 {
 
 }
 
-RtmpConnection::ShakeHandResult RtmpConnection::ShakeHand(Buffer* buffer)
+RtmpServerConnection::ShakeHandResult RtmpServerConnection::ShakeHand(Buffer* buffer)
 {
 	while (true)
 	{
@@ -51,7 +51,7 @@ RtmpConnection::ShakeHandResult RtmpConnection::ShakeHand(Buffer* buffer)
 				break;
 			case RtmpManager::SHAKE_SUCCESS:
 			{
-				return RtmpConnection::SHAKE_SUCCESS;
+				return RtmpServerConnection::SHAKE_SUCCESS;
 			}
 			case RtmpManager::SHAKE_FAILED:
 			{
@@ -69,7 +69,7 @@ RtmpConnection::ShakeHandResult RtmpConnection::ShakeHand(Buffer* buffer)
 	}
 }
 
-ssize_t RtmpConnection::WriteToFile(File* file_write)
+ssize_t RtmpServerConnection::WriteToFile(File* file_write)
 {
 	LOG_INFO("connection: %s start write data to file", connection_ptr_->GetConnectionName().c_str());
 
@@ -113,7 +113,7 @@ ssize_t RtmpConnection::WriteToFile(File* file_write)
 	return sum_write_bytes;
 }
 
-ssize_t RtmpConnection::ParseData(Buffer* buffer)
+ssize_t RtmpServerConnection::ParseData(Buffer* buffer)
 {
 	ssize_t result = rtmp_manager_.ParseData(buffer);
 	DebugParseSize(10 * 1000 * 1000);
@@ -121,7 +121,7 @@ ssize_t RtmpConnection::ParseData(Buffer* buffer)
 	return result;
 }
 
-void RtmpConnection::DebugParseSize(size_t division)
+void RtmpServerConnection::DebugParseSize(size_t division)
 {
 	size_t read_m = rtmp_manager_.GetParsedLength() / division;
 	if (read_m != last_write_size_)
@@ -131,23 +131,42 @@ void RtmpConnection::DebugParseSize(size_t division)
 				rtmp_manager_.GetParsedLength());
 	}
 }
+std::string response_header = "HTTP/1.1 200 OK\r\n"
+							  "Server: FISH_LIVE\r\n"
+							  "Date: Sun, 29 Nov 2020 15:30:42 GMT\r\n"
+							  "Content-Type: video/x-flv\r\n"
+							  "Transfer-Encoding: chunked\r\n"
+							  "Connection: keep-alive\r\n"
+							  "Access-Control-Allow-Origin: *\r\n\r\n";
 
-const Buffer* RtmpConnection::GetHeaderDataBuffer()
+const Buffer* RtmpServerConnection::GetHeaderDataBuffer()
 {
 	if (header_buffer_.ReadableLength() == 0)
 	{
-		flv_manager_->EncodeHeadersToBuffer(&header_buffer_);
+		Buffer header_buffer_temp;
+		flv_manager_->EncodeHeadersToBuffer(&header_buffer_temp);
+
+		std::string length_rn = Format::ToHexStringWithCrlf(header_buffer_temp.ReadableLength());
+		header_buffer_.AppendData(response_header);
+		header_buffer_.AppendData(length_rn);
+		header_buffer_.AppendData(&header_buffer_temp);
+		header_buffer_.AppendData("\r\n");
 	}
 	return &header_buffer_;
 }
 
-void RtmpConnection::OnConnectionShakeHand(const TcpConnectionPtr& connection_ptr, Buffer* buffer, Timestamp timestamp)
+void RtmpServerConnection::OnConnectionShakeHand(const TcpConnectionPtr& connection_ptr, Buffer* buffer, Timestamp timestamp)
 {
-	RtmpConnection::ShakeHandResult result = ShakeHand(buffer);
+	RtmpServerConnection::ShakeHandResult result = ShakeHand(buffer);
 	switch (result)
 	{
-		case RtmpConnection::SHAKE_SUCCESS:
+		case RtmpServerConnection::SHAKE_SUCCESS:
 		{
+			if (shake_hand_success_callback_)
+			{
+				shake_hand_success_callback_(this);
+			}
+
 			connection_ptr->SetNewMessageCallback(
 					[this](auto&& PH1, auto&& PH2, auto&& PH3)
 					{
@@ -161,7 +180,7 @@ void RtmpConnection::OnConnectionShakeHand(const TcpConnectionPtr& connection_pt
 			 */
 			return;
 		}
-		case RtmpConnection::SHAKE_FAILED:
+		case RtmpServerConnection::SHAKE_FAILED:
 		{
 			LOG_WARN("connection: %s shake hand failed",
 					connection_ptr->GetConnectionName().c_str());
@@ -171,7 +190,7 @@ void RtmpConnection::OnConnectionShakeHand(const TcpConnectionPtr& connection_pt
 			 */
 			return;
 		}
-		case RtmpConnection::SHAKE_DATA_NOT_ENOUGH:
+		case RtmpServerConnection::SHAKE_DATA_NOT_ENOUGH:
 			/**
 			 * 数据不足时返回
 			 */
@@ -179,12 +198,40 @@ void RtmpConnection::OnConnectionShakeHand(const TcpConnectionPtr& connection_pt
 	}
 }
 
-void RtmpConnection::OnBodyData(const TcpConnectionPtr& connection_ptr, Buffer* buffer, Timestamp timestamp)
+void RtmpServerConnection::OnBodyData(const TcpConnectionPtr& connection_ptr, Buffer* buffer, Timestamp timestamp)
 {
 	ParseData(buffer);
 }
 
-const std::vector<FlvTag*>* RtmpConnection::GetFlvTagVector() const
+void RtmpServerConnection::AddClientConnection(
+		const RtmpClientConnectionPtr& client_connection_ptr)
 {
-	return flv_tag_vector_;
+	client_connection_map_[client_connection_ptr->GetConnectionName()]
+		= client_connection_ptr;
+
+	SendHeaderToClientConnection(client_connection_ptr);
 }
+
+void RtmpServerConnection::SetShakeHandSuccessCallback(const ShakeHandSuccessCallback& callback)
+{
+	shake_hand_success_callback_ = callback;
+}
+
+void RtmpServerConnection::SendHeaderToClientConnection(
+		const RtmpClientConnectionPtr& client_connection_ptr)
+{
+	const Buffer* header_buffer = GetHeaderDataBuffer();
+
+	client_connection_ptr->Send(header_buffer);
+}
+
+void RtmpServerConnection::OnNewFlvTag(const FlvTagPtr& tag_ptr)
+{
+	FlvTagBufferPtr buffer_ptr = std::make_shared<FlvTagBuffer>(tag_ptr);
+
+	for (auto& [connection_name, connection_ptr] : client_connection_map_)
+	{
+		connection_ptr->AddNewTag(buffer_ptr);
+	}
+}
+

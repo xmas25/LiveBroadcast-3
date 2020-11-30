@@ -20,7 +20,8 @@ set(NETWORK_SRCS
 		network/multiplexing/MultiplexingBase.cpp
 		network/multiplexing/Select.cpp
 		network/PlatformNetwork.cpp
-		network/protocol/RtmpConnection.cpp
+        network/protocol/RtmpServerConnection.cpp
+        network/protocol/RtmpClientConnection.cpp
 		)
 
 set(NETWORK_HEADERS
@@ -38,7 +39,8 @@ set(NETWORK_HEADERS
 		network/multiplexing/MultiplexingBase.h
 		network/multiplexing/Select.h
 		network/PlatformNetwork.h
-		network/protocol/RtmpConnection.h
+        network/protocol/RtmpServerConnection.h
+        network/protocol/RtmpClientConnection.h
 		)
 
 set(UTILS_SRCS
