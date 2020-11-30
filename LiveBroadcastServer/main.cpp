@@ -95,7 +95,8 @@ std::string response_header = "HTTP/1.1 200 OK\r\n"
 							  "Date: Sun, 29 Nov 2020 15:30:42 GMT\r\n"
 							  "Content-Type: video/x-flv\r\n"
 							  "Transfer-Encoding: chunked\r\n"
-							  "Connection: keep-alive\r\n\r\n";
+							  "Connection: keep-alive\r\n"
+		  					  "Access-Control-Allow-Origin: *\r\n\r\n";
 void OnNewClientMessage(const TcpConnectionPtr& connection_ptr, Buffer* buffer, Timestamp timestamp)
 {
 	LOG_INFO("connection: %s, send\n%s", connection_ptr->GetConnectionName().c_str(),

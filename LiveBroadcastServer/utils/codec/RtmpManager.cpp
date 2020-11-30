@@ -153,11 +153,6 @@ ssize_t RtmpManager::ParseScriptPack(Buffer* buffer, RtmpPack* script_pack)
 	}
 	else
 	{
-		/**
-		 * 0x10 for obs ...@setDataFrame
-		 */
-		script_pack->SetBodyDataSize(script_pack->GetBodyDataSize() - 0x10);
-		buffer->AddReadIndex(0x10);
 		script_pack->AppendData(buffer->ReadBegin(), script_pack->GetBodyDataSize());
 		buffer->AddReadIndex(script_pack->GetBodyDataSize());
 		result += script_pack->GetBodyDataSize();
