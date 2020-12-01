@@ -11,7 +11,7 @@
 class FlvTagBuffer
 {
 public:
-	FlvTagBuffer(const FlvTagPtr& flv_tag);
+	explicit FlvTagBuffer(const FlvTagPtr& flv_tag);
 
 	const Buffer* GetBuffer() const;
 private:
@@ -28,12 +28,17 @@ public:
 
 	std::string GetConnectionName() const;
 
-	void Send(const Buffer* buffer);
+	void SendHeader(const Buffer* buffer);
 
 	void AddNewTag(const FlvTagBufferPtr& tag_buffer_ptr);
+
+	void SetCloseConnectionCallback(const ConnectionCallback& callback);
 private:
 
 	TcpConnectionPtr connection_ptr_;
+	ConnectionCallback close_connection_callback_;
+
+	void OnConnection(const TcpConnectionPtr& connection_ptr);
 };
 
 

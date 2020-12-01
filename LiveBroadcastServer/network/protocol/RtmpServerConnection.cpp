@@ -13,7 +13,9 @@ RtmpServerConnection::RtmpServerConnection(const TcpConnectionPtr& connection_pt
 		last_write_size_(0),
 		header_buffer_()
 {
-
+	rtmp_manager_.SetNewFlvTagCallback(
+			[this](auto&& PH1){RtmpServerConnection::OnNewFlvTag(PH1);}
+			);
 }
 
 RtmpServerConnection::ShakeHandResult RtmpServerConnection::ShakeHand(Buffer* buffer)
@@ -162,6 +164,8 @@ void RtmpServerConnection::OnConnectionShakeHand(const TcpConnectionPtr& connect
 	{
 		case RtmpServerConnection::SHAKE_SUCCESS:
 		{
+			LOG_INFO("connection: %s shake hand success",
+					connection_ptr->GetConnectionName().c_str());
 			if (shake_hand_success_callback_)
 			{
 				shake_hand_success_callback_(this);
@@ -173,8 +177,6 @@ void RtmpServerConnection::OnConnectionShakeHand(const TcpConnectionPtr& connect
 						OnBodyData(PH1, PH2, PH3);
 					}
 					);
-			LOG_INFO("connection: %s shake hand success",
-					connection_ptr->GetConnectionName().c_str());
 			/**
 			 * 握手成功时返回
 			 */
@@ -209,6 +211,12 @@ void RtmpServerConnection::AddClientConnection(
 	client_connection_map_[client_connection_ptr->GetConnectionName()]
 		= client_connection_ptr;
 
+	LOG_INFO("server: %s, add a client: %s", connection_ptr_->GetConnectionName().c_str(),
+			client_connection_ptr->GetConnectionName().c_str());
+
+	client_connection_ptr->SetCloseConnectionCallback(
+			[this](auto&& PH1){OnConnectionClose(PH1);});
+
 	SendHeaderToClientConnection(client_connection_ptr);
 }
 
@@ -222,11 +230,18 @@ void RtmpServerConnection::SendHeaderToClientConnection(
 {
 	const Buffer* header_buffer = GetHeaderDataBuffer();
 
-	client_connection_ptr->Send(header_buffer);
+	client_connection_ptr->SendHeader(header_buffer);
+
+	/**
+	 * 头部之后第一个 Tag的PreviousTagSize 需要设置为 头部中最后一个Tag的CurrentSize
+	 */
+	last_flv_tag_ptr_->SetPreviousTagSize(GetLastHeaderTagCurrentSize());
+	client_connection_ptr->AddNewTag(std::make_shared<FlvTagBuffer>(last_flv_tag_ptr_));
 }
 
 void RtmpServerConnection::OnNewFlvTag(const FlvTagPtr& tag_ptr)
 {
+	last_flv_tag_ptr_ = tag_ptr;
 	FlvTagBufferPtr buffer_ptr = std::make_shared<FlvTagBuffer>(tag_ptr);
 
 	for (auto& [connection_name, connection_ptr] : client_connection_map_)
@@ -235,3 +250,14 @@ void RtmpServerConnection::OnNewFlvTag(const FlvTagPtr& tag_ptr)
 	}
 }
 
+uint32_t RtmpServerConnection::GetLastHeaderTagCurrentSize() const
+{
+	return flv_manager_->GetVideoAudioTags()[1].GetCurrentTagSize();
+}
+
+void RtmpServerConnection::OnConnectionClose(const TcpConnectionPtr& connection_ptr)
+{
+	client_connection_map_.erase(connection_ptr->GetConnectionName());
+	LOG_INFO("client: %s, remove from server: %s", connection_ptr->GetConnectionName().c_str(),
+			connection_ptr_->GetConnectionName().c_str());
+}

@@ -3,7 +3,7 @@
 #include <iostream>
 #include <unistd.h>
 #include <ctime>
-#include <signal.h>
+#include <csignal>
 
 #include "network/TcpServer.h"
 #include "network/EventLoop.h"
@@ -21,11 +21,13 @@ std::string ROOT = R"(/root/server/)";
 std::string FILE_PREFIX = ".flv";
 
 std::map<std::string, RtmpServerConnection*> rtmp_connection_map;
-std::map<std::string, size_t> send_sub_map;
 
-void OnShakeHandSuccess(const RtmpServerConnection* server_connection)
+/** 客户端名称对应的 RtmpServerConnection */
+std::map<std::string, RtmpServerConnection*> client_server_map;
+
+void OnShakeHandSuccess(RtmpServerConnection* server_connection)
 {
-
+	rtmp_connection_map["test.flv"] = server_connection;
 }
 
 void OnConnection(const TcpConnectionPtr& connection_ptr)
@@ -48,15 +50,18 @@ void OnConnection(const TcpConnectionPtr& connection_ptr)
 	}
 }
 
-void OnNewClientMessage(const TcpConnectionPtr& connection_ptr, Buffer* buffer, Timestamp timestamp)
+void OnClientMessage(const TcpConnectionPtr& connection_ptr, Buffer* buffer, Timestamp timestamp)
 {
 	std::string connection_data = buffer->ReadAllAsString();
 	LOG_INFO("connection: %s, send\n%s", connection_ptr->GetConnectionName().c_str(),
 			connection_data.c_str());
 
-	std::string url = Format::GetUrl(connection_data);
+	// std::string url = Format::GetUrl(connection_data);
+	std::string url = "test.flv";
 
 	RtmpServerConnection* server_connection = rtmp_connection_map[url];
+	client_server_map[connection_ptr->GetConnectionName()] = server_connection;
+
 	if (server_connection)
 	{
 		server_connection->AddClientConnection(
@@ -74,7 +79,7 @@ int main()
 	TcpServer client_server(&loop, "client_server", client_server_address);
 
 	main_server.SetConnectionCallback(OnConnection);
-	client_server.SetNewMessageCallback(OnNewClientMessage);
+	client_server.SetNewMessageCallback(OnClientMessage);
 	main_server.Start();
 	client_server.Start();
 

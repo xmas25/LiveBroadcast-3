@@ -1,13 +1,14 @@
 #ifndef SERVER_RTMPMANAGER_H
 #define SERVER_RTMPMANAGER_H
 
+#include <functional>
 #include "utils/codec/RtmpCodec.h"
 #include "utils/codec/FlvManager.h"
 
 constexpr int RTMP_START_PARSE_LENGTH = 1000;
 constexpr int RTMP_CHUNK_SIZE = 4096;
 
-
+typedef std::function<void(const FlvTagPtr&)> NewFlvTagCallback;
 class RtmpManager
 {
 public:
@@ -49,6 +50,7 @@ public:
 
 	size_t GetParsedLength() const;
 
+	void SetNewFlvTagCallback(const NewFlvTagCallback& callback);
 private:
 
 	ParseStatus parsed_status_;
@@ -66,6 +68,10 @@ private:
 	uint32_t read_chunk_size_;
 	/* 用于标识当前chunk是否解析完毕 未解析完不能创建新的tag*/
 	bool chunk_over_;
+
+	NewFlvTagCallback new_flv_tag_callback_;
+
+	FlvTagPtr last_flv_ptr_;
 
 	ssize_t ParseFirstHeader(Buffer* buffer);
 	ssize_t ParseScriptPack(Buffer* buffer, RtmpPack* script_pack);
@@ -93,7 +99,7 @@ private:
 	 */
 	static ssize_t ParseHeaderAndBody(Buffer* buffer, RtmpPack* rtmp_pack);
 
-	void PushBackFlvTag(FlvTag* tag);
+	void ProcessNewFlvTag(const FlvTagPtr& tag);
 };
 
 #endif

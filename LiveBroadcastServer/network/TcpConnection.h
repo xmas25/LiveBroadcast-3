@@ -43,6 +43,11 @@ public:
 	 */
 	void SetConnectionCallback(const ConnectionCallback& callback);
 	void SetWriteCompleteCallback(const WriteCompleteCallback & callback);
+
+	/**
+	 * 内部使用
+	 * @param callback
+	 */
 	void SetConnectionCloseCallback(const ConnectionCallback& callback);
 
 	const std::string& GetConnectionName() const;

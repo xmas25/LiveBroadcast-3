@@ -8,7 +8,8 @@ RtmpManager::RtmpManager():
 		rtmp_codec_(),
 		flv_manager_(),
 		read_chunk_size_(0),
-		chunk_over_(true)
+		chunk_over_(true),
+		last_flv_ptr_()
 {
 }
 
@@ -52,9 +53,9 @@ ssize_t RtmpManager::ParseData(Buffer* buffer)
 			parsed = ParseBody(buffer);
 			if (parsed > 0)
 			{
-				FlvTag* tag = new FlvTag;
-				rtmp_codec_.EncodeHeaderAndSwapBuffer(&current_rtmp_pack_, tag);
-				PushBackFlvTag(tag);
+				FlvTagPtr tag_ptr = std::make_shared<FlvTag>();
+				rtmp_codec_.EncodeHeaderAndSwapBuffer(&current_rtmp_pack_, tag_ptr.get());
+				ProcessNewFlvTag(tag_ptr);
 			}
 			else if (parsed < 0)
 			{
@@ -91,6 +92,11 @@ ssize_t RtmpManager::ParseData(Buffer* buffer)
 FlvManager* RtmpManager::GetFlvManager()
 {
 	return &flv_manager_;
+}
+
+void RtmpManager::SetNewFlvTagCallback(const NewFlvTagCallback& callback)
+{
+	new_flv_tag_callback_ = callback;
 }
 
 ssize_t RtmpManager::ParseFirstHeader(Buffer* buffer)
@@ -281,11 +287,24 @@ ssize_t RtmpManager::ParseBody(Buffer* buffer, RtmpPack* rtmp_pack, bool chunk_o
 	}
 }
 
-void RtmpManager::PushBackFlvTag(FlvTag* tag)
+void RtmpManager::ProcessNewFlvTag(const FlvTagPtr& tag_ptr)
 {
-	if (tag->GetTagType() == RtmpPack::RTMP_VIDEO || tag->GetTagType() == RtmpPack::RTMP_AUDIO)
+	if (tag_ptr->GetTagType() == RtmpPack::RTMP_VIDEO || tag_ptr->GetTagType() == RtmpPack::RTMP_AUDIO)
 	{
-		flv_manager_.PushBackFlvTagAndSetPreviousSize(tag);
+		if (last_flv_ptr_)
+		{
+			tag_ptr->SetPreviousTagSize(last_flv_ptr_->GetCurrentTagSize());
+		}
+		else
+		{
+			tag_ptr->SetPreviousTagSize(0);
+		}
+		last_flv_ptr_ = tag_ptr;
+
+		if (new_flv_tag_callback_)
+		{
+			new_flv_tag_callback_(tag_ptr);
+		}
 	}
 }
 

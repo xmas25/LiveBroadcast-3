@@ -25,7 +25,11 @@ void TcpConnection::Established()
 
 	channel_.TieConnection(shared_from_this());
 	channel_.EnableReadable();
-	connection_callback_(shared_from_this());
+
+	if (connection_callback_)
+	{
+		connection_callback_(shared_from_this());
+	}
 }
 
 void TcpConnection::SetNewMessageCallback(const NewMessageCallback& callback)

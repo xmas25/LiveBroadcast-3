@@ -2,7 +2,6 @@
 #define CORE_FLVMANAGER_H
 
 #include <vector>
-
 #include "utils/codec/FlvCodec.h"
 #include "utils/File.h"
 #include "utils/Buffer.h"
@@ -49,9 +48,6 @@ public:
 	 * @return
 	*/
 	FlvTag* GetVideoAudioTags();
-
-	void PushBackFlvTagAndSetPreviousSize(FlvTag* flv_tag);
-
 
 	/**
 	 * TODO 进行缓存

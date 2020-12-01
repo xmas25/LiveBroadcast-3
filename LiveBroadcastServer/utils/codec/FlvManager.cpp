@@ -136,23 +136,6 @@ FlvTag* FlvManager::GetVideoAudioTags()
 	return &video_audio_tags[0];
 }
 
-void FlvManager::PushBackFlvTagAndSetPreviousSize(FlvTag* flv_tag)
-{
-	if (!last_tag_)
-	{
-		flv_tag->SetPreviousTagSize(0);
-	}
-	else
-	{
-		flv_tag->SetPreviousTagSize(last_tag_->GetCurrentTagSize()
-		);
-	}
-	flv_tags_.push_back(flv_tag);
-
-	last_tag_ = flv_tag;
-
-}
-
 ssize_t FlvManager::EncodeHeadersToBuffer(Buffer* buffer)
 {
 	uint32_t data_length = FlvHeader::FLV_HEADER_LENGTH + script_tag_.GetCurrentTagSize() + 4
@@ -172,7 +155,6 @@ ssize_t FlvManager::EncodeHeadersToBuffer(Buffer* buffer)
 
 	video_audio_tags[0].SetPreviousTagSize(script_tag_.GetCurrentTagSize());
 	video_audio_tags[1].SetPreviousTagSize(video_audio_tags[0].GetCurrentTagSize());
-	flv_tags_[0]->SetPreviousTagSize(video_audio_tags[1].GetCurrentTagSize());
 
 	for (int i = 0; i < 2; ++i)
 	{

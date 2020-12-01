@@ -18,7 +18,7 @@
 class RtmpServerConnection;
 typedef std::shared_ptr<RtmpClientConnection> RtmpClientConnectionPtr;
 typedef std::map<std::string, RtmpClientConnectionPtr> RtmpClientConnectionMap;
-typedef std::function<void(const RtmpServerConnection*)> ShakeHandSuccessCallback;
+typedef std::function<void(RtmpServerConnection*)> ShakeHandSuccessCallback;
 
 class RtmpServerConnection
 {
@@ -78,6 +78,8 @@ private:
 
 	size_t last_write_size_;
 
+	FlvTagPtr last_flv_tag_ptr_;
+
 	Buffer header_buffer_;
 
 	ShakeHandSuccessCallback shake_hand_success_callback_;
@@ -97,6 +99,10 @@ private:
 	 * @param new_tag
 	 */
 	void OnNewFlvTag(const FlvTagPtr& new_tag);
+
+	uint32_t GetLastHeaderTagCurrentSize() const;
+
+	void OnConnectionClose(const TcpConnectionPtr& connection_ptr);
 };
 
 
