@@ -30,6 +30,8 @@ private:
 
 	std::string server_name_;
 
+	InetAddress server_address_;
+
 	Acceptor acceptor_;
 
 	ConnectionCallback connection_callback_;

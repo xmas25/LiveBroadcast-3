@@ -82,16 +82,25 @@ void OnClientMessage(const TcpConnectionPtr& connection_ptr, Buffer* buffer, Tim
 	}
 }
 
-int main()
+int main(int argc, char* argv[])
 {
 
 #ifndef _WIN32
 	signal(SIGPIPE, SIG_IGN);
 #endif
 
+	if (argc != 3)
+	{
+		printf("wrong number of parameters\r\n");
+		exit(-1);
+	}
+
+	short main_server_port = atoi(argv[1]);
+	short client_server_port = atoi(argv[2]);
+
 	EventLoop loop;
-	InetAddress main_server_address(4001, true);
-	InetAddress client_server_address(4101, true);
+	InetAddress main_server_address(main_server_port, true);
+	InetAddress client_server_address(client_server_port, true);
 	TcpServer main_server(&loop, "main_server", main_server_address);
 	TcpServer client_server(&loop, "client_server", client_server_address);
 

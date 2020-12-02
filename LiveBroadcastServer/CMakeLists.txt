@@ -71,13 +71,13 @@ set(UTILS_HEADERS
 
 add_executable(RtmpManagerTest utils/codec/test/RtmpManagerTest.cpp ${UTILS_SRCS} ${UTILS_HEADERS})
 
-add_executable(main main.cpp ${NETWORK_SRCS} ${NETWORK_HEADERS} ${UTILS_SRCS} ${UTILS_HEADERS})
+add_executable(LiveBroadcastServer main.cpp ${NETWORK_SRCS} ${NETWORK_HEADERS} ${UTILS_SRCS} ${UTILS_HEADERS})
 
 add_executable(LoggerTest utils/test/LoggerTest.cpp utils/Logger.h utils/Logger.cpp utils/PlatformBase.h utils/PlatformBase.cpp)
 
 add_executable(TcpServerTest network/test/TcpServerTest.cpp ${NETWORK_SRCS} ${NETWORK_HEADERS} ${UTILS_SRCS} ${UTILS_HEADERS})
 
 if(WIN32)
-	target_link_libraries(main ws2_32)
+	target_link_libraries(LiveBroadcastServer ws2_32)
 	target_link_libraries(TcpServerTest ws2_32)
 endif()

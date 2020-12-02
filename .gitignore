@@ -1,3 +1,5 @@
 .vs/
 out/
 .gitignore
+.idea/
+.cmake-build-debug/
