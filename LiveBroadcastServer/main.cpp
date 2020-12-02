@@ -84,7 +84,11 @@ void OnClientMessage(const TcpConnectionPtr& connection_ptr, Buffer* buffer, Tim
 
 int main()
 {
+
+#ifndef _WIN32
 	signal(SIGPIPE, SIG_IGN);
+#endif
+
 	EventLoop loop;
 	InetAddress main_server_address(4001, true);
 	InetAddress client_server_address(4101, true);

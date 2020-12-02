@@ -48,6 +48,8 @@ int write(SOCKET s, const uint8_t *buf, int len);
 
 int read(SOCKET s, char *buf, int len);
 
+#define SHUT_WR SD_SEND
+
 #else
 #include <sys/socket.h>
 #include <arpa/inet.h>
