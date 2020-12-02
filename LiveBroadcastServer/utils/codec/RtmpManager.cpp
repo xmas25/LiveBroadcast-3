@@ -99,6 +99,15 @@ void RtmpManager::SetNewFlvTagCallback(const NewFlvTagCallback& callback)
 	new_flv_tag_callback_ = callback;
 }
 
+std::string RtmpManager::GetUrlFromConnectPack() const
+{
+	RtmpPack connect_pack = connect_pack_;
+	std::string body_str = connect_pack.GetBuffer()->ReadAllAsString();
+	auto begin_idx = body_str.find("rtmp");
+	size_t len = strlen(&body_str[begin_idx]);
+	return body_str.substr(begin_idx, len);
+}
+
 ssize_t RtmpManager::ParseFirstHeader(Buffer* buffer)
 {
 	/**
@@ -310,7 +319,7 @@ void RtmpManager::ProcessNewFlvTag(const FlvTagPtr& tag_ptr)
 
 RtmpManager::ShakeHandPackType RtmpManager::ParseShakeHand(Buffer* buffer)
 {
-	ssize_t parse;
+	ssize_t parse = 0;
 	switch (shake_hand_status_)
 	{
 		case SHAKE_RTMP_C01:
@@ -353,8 +362,7 @@ RtmpManager::ShakeHandPackType RtmpManager::ParseShakeHand(Buffer* buffer)
 		}
 		case SHAKE_RTMP_CONNECT:
 		{
-			RtmpPack connect_pack;
-			parse = ParseHeaderAndBody(buffer, &connect_pack);
+			parse = ParseHeaderAndBody(buffer, &connect_pack_);
 			if (parse > 0)
 			{
 				shake_hand_status_ = SHAKE_RTMP_RELEASE_STREAM;

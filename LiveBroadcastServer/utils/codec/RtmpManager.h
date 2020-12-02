@@ -51,6 +51,8 @@ public:
 	size_t GetParsedLength() const;
 
 	void SetNewFlvTagCallback(const NewFlvTagCallback& callback);
+
+	std::string GetUrlFromConnectPack() const;
 private:
 
 	ParseStatus parsed_status_;
@@ -72,6 +74,8 @@ private:
 	NewFlvTagCallback new_flv_tag_callback_;
 
 	FlvTagPtr last_flv_ptr_;
+
+	RtmpPack connect_pack_;
 
 	ssize_t ParseFirstHeader(Buffer* buffer);
 	ssize_t ParseScriptPack(Buffer* buffer, RtmpPack* script_pack);

@@ -20,6 +20,25 @@ std::string Format::ToHexStringWithCrlf(size_t decimal_num)
 std::string Format::GetUrl(const std::string& str)
 {
 	auto url_begin = str.find(' ') + 1;
-	auto url_end = str.find(url_begin, ' ');
+	auto url_end = str.find(' ', url_begin);
+	if (str[url_end - 1] == '/')
+	{
+		url_end--;
+	}
 	return str.substr(url_begin, url_end - url_begin);
+}
+
+std::string Format::GetPathFromUrl(const std::string& url)
+{
+	auto idx = url.find("//");
+	auto idx1 = url.find('/', idx + 2);
+
+	std::string path = url.substr(idx1);
+
+	size_t path_len = path.length();
+	if (path.find_last_of('/') == path.length() - 1)
+	{
+		path_len--;
+	}
+	return path.substr(0, path_len);
 }

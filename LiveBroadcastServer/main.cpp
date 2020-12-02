@@ -17,9 +17,6 @@
 NetworkInitializer init;
 #endif
 
-std::string ROOT = R"(/root/server/)";
-std::string FILE_PREFIX = ".flv";
-
 std::map<std::string, RtmpServerConnection*> rtmp_connection_map;
 
 /** 客户端名称对应的 RtmpServerConnection */
@@ -27,7 +24,15 @@ std::map<std::string, RtmpServerConnection*> client_server_map;
 
 void OnShakeHandSuccess(RtmpServerConnection* server_connection)
 {
-	rtmp_connection_map["test.flv"] = server_connection;
+	/**
+	 * 将推流的url和server_connection关联起来 用于拉流的时候根据url获取对应的server_connection
+	 *
+	 * rtmp链接到server_connection 映射关系可以自己修改
+	 */
+	std::string path = server_connection->GetRtmpPath();
+	rtmp_connection_map[path] = server_connection;
+	LOG_INFO("server: %s bind to %s", server_connection->GetConnectionName().c_str(),
+			path.c_str());
 }
 
 void OnConnection(const TcpConnectionPtr& connection_ptr)
@@ -53,19 +58,27 @@ void OnConnection(const TcpConnectionPtr& connection_ptr)
 void OnClientMessage(const TcpConnectionPtr& connection_ptr, Buffer* buffer, Timestamp timestamp)
 {
 	std::string connection_data = buffer->ReadAllAsString();
-	LOG_INFO("connection: %s, send\n%s", connection_ptr->GetConnectionName().c_str(),
-			connection_data.c_str());
 
-	// std::string url = Format::GetUrl(connection_data);
-	std::string url = "test.flv";
-
+	/**
+	 * 获取HTTP请求中的url 根据上面设置的映射关系 同样获取url
+	 * 来获取到对应的server_connection 加入其中
+	 */
+	std::string url = Format::GetUrl(connection_data);
 	RtmpServerConnection* server_connection = rtmp_connection_map[url];
-	client_server_map[connection_ptr->GetConnectionName()] = server_connection;
 
 	if (server_connection)
 	{
+		LOG_INFO("connection: %s, request url: %s success", connection_ptr->GetConnectionName().c_str(),
+				url.c_str());
+		client_server_map[connection_ptr->GetConnectionName()] = server_connection;
 		server_connection->AddClientConnection(
 				std::make_shared<RtmpClientConnection>(connection_ptr));
+	}
+	else
+	{
+		LOG_INFO("connection: %s, request url: %s failed", connection_ptr->GetConnectionName().c_str(),
+				url.c_str());
+		connection_ptr->Shutdown();
 	}
 }
 
@@ -73,8 +86,8 @@ int main()
 {
 	signal(SIGPIPE, SIG_IGN);
 	EventLoop loop;
-	InetAddress main_server_address(4000, true);
-	InetAddress client_server_address(4100, true);
+	InetAddress main_server_address(4001, true);
+	InetAddress client_server_address(4101, true);
 	TcpServer main_server(&loop, "main_server", main_server_address);
 	TcpServer client_server(&loop, "client_server", client_server_address);
 

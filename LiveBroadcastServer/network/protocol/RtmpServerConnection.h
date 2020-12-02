@@ -68,6 +68,12 @@ public:
 	void AddClientConnection(const RtmpClientConnectionPtr& client_connection_ptr);
 
 	void SetShakeHandSuccessCallback(const ShakeHandSuccessCallback& callback);
+
+	std::string GetRtmpUrl() const;
+
+	std::string GetRtmpPath() const;
+
+	std::string GetConnectionName() const;
 private:
 
 	TcpConnectionPtr connection_ptr_;

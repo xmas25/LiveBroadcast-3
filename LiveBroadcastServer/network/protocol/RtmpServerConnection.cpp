@@ -118,7 +118,7 @@ ssize_t RtmpServerConnection::WriteToFile(File* file_write)
 ssize_t RtmpServerConnection::ParseData(Buffer* buffer)
 {
 	ssize_t result = rtmp_manager_.ParseData(buffer);
-	DebugParseSize(10 * 1000 * 1000);
+	DebugParseSize(100 * 1000 * 1000);
 
 	return result;
 }
@@ -223,6 +223,21 @@ void RtmpServerConnection::AddClientConnection(
 void RtmpServerConnection::SetShakeHandSuccessCallback(const ShakeHandSuccessCallback& callback)
 {
 	shake_hand_success_callback_ = callback;
+}
+
+std::string RtmpServerConnection::GetRtmpUrl() const
+{
+	return rtmp_manager_.GetUrlFromConnectPack();
+}
+
+std::string RtmpServerConnection::GetRtmpPath() const
+{
+	return Format::GetPathFromUrl(GetRtmpUrl());
+}
+
+std::string RtmpServerConnection::GetConnectionName() const
+{
+	return connection_ptr_->GetConnectionName();
 }
 
 void RtmpServerConnection::SendHeaderToClientConnection(
