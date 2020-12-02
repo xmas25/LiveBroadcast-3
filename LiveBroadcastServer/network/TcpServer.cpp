@@ -5,6 +5,7 @@
 TcpServer::TcpServer(EventLoop* loop, const std::string& server_name, const InetAddress& address) :
 	loop_(loop),
 	server_name_(server_name),
+	server_address_(address),
 	acceptor_(loop, server_name, address),
 	connection_id_(0)
 {
@@ -22,6 +23,8 @@ TcpServer::~TcpServer()
 
 void TcpServer::Start()
 {
+	LOG_INFO("server: %s listen on %s",
+			server_name_.c_str(), server_address_.ToIpPort().c_str())
 	acceptor_.Listen();
 }
 
