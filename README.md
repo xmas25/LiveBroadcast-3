@@ -1,44 +1,93 @@
-当前进度 `服务器端`解析Rtmp推流保存并为可以播放的Flv文件 (初版完成)
+# 项目说明
 
-服务器端代码量 包含网络部分 3000余行 - 2020年11月18日
+**当前进度 支持多个RTMP推流者推流 支持多个HTTP-FLV拉流者拉取对应的流观看**
+
+**使用C++17标准 Windows和Centos平台均使用gcc编译通过正常使用**
+
+**运行后在两个推流者四个观看者情况下 占用内存6Mb CPU使用极低**
+
+**支持IPV4和IPV6**
+
+服务器端代码量 包含网络部分 5000余行
+
+HttpFlv拉流的播放器目前测试通过PotPlayer, VLC, flv.js
+
+RTMP推流播放器仅测试过Obs
+
+网络部分学习自 https://github.com/chenshuo/muduo
+
+跨平台支持学习自 https://github.com/balloonwj/flamingo
+
+HTTP包装 RTMP解析 FLV解析 参考自网络相关文档
 
 # 项目规划
 
-开发轻量级的可用于P2P直播的`服务器端`和`观看客户端`
+开发轻量级跨Windows和Linux的可用于P2P直播的`服务器端`和`观看客户端`
 
 项目不打算开发UI方面的功能, 视频将使用第三方的支持HttpFlv拉流的播放器来播放(如PotPlayer)
 
-开发可以接收Rtmp推流的`服务器端`  (初版完成)
+## 开发进度
 
+支持多个RTMP推流者推流(已完成)
 
+支持多个HTTP-FLV拉流者拉取对应的流观看(已完成)
 
-`服务器端`可以`接收HttpFlv的拉流` (未开发)
+开发`观看客户端`主要用于从`服务器端`接收FLV数据 本地转化成HttpFlv格式 供`HttpFlv拉流软件本地拉取` (未开发)
 
-开发`观看客户端`主要用于从`服务器端`接收二进制的Flv数据 本地转化成HttpFlv格式 供`HttpFlv拉流软件本地拉取` (未开发)
-
-`观看者客户端`可以从`服务器端`获取数据 野通过P2P与其他`观看者客户端`进行共享 (未开发)
+`观看者客户端`可以从`服务器端`获取数据也可以通过P2P技术与其他`观看者客户端`进行共享 (未开发)
 
 ## 初版
 
-主播使用`RTMP推流软件(如Obs)`将RTMP流发送到`服务器端` `服务器端`将Rtmp流以FLv格式保存在内存缓冲区 或者写入Flv文件
+主播使用`RTMP推流软件(如Obs)`将RTMP流发送到`服务器端` `服务器端`将Rtmp流解析生成FLV数据包装在HTTP中推送给观看者
 
 观看者直接使用`服务器端`生成的HTTPFLV地址 拉流观看
 
 
-
-观看者下载`观看者客户端`从`服务器端`获得Socket数据流
-
-`观看者客户端`将Socket数据流包装成HTTP协议 生成本地连接如`http://127.0.0.1:4000/xxxxx.mp4` 使用第三方网络视频播放器进行播放
-
 ## P2P版本 (未开发)
 
-由于`观看者客户端`从`服务器端`获取的是Socket数据流 `观看者客户端`可以将其包装成HTTP格式 进行本地播放或者给其他`观看者客户端`提供链接进行播放
+# 使用说明
+
+**编译执行文件**
+下载源代码后在Windows平台或者Linux平台编译
+```shell
+git clone https://github.com/HiganFish/LiveBroadcast.git
+
+cd LiveBroadcast/LiveBroadcastServer/
+
+mkdir build && cd build
+
+cmake ..
+
+make -j4
+```
+生成运行文件`LiveBroadcastServer`
+
+
+**运行服务器**
+```shell
+./LiveBroadcastServer 4000 4100 # 4000 Rtmp推流端口 4100 HTTP-FLV拉流端口
+```
+
+**Obs推流**
+```shell
+# 设置->推流->服务器
+rtmp://[::1]:4000/test-push  # 注意 rtmp和http链接的对应关系 默认是相同的路径为同一个房间
+rtmp://127.0.0.1:4000/test-push # 可以在main.cpp中修改映射关系
+```
+
+**HTTP-FLV拉流**
+```shell
+http://[::1]:4000/test-push # 注意 rtmp和http链接的对应关系 默认是相同的路径为同一个房间
+http://127.0.0.1:4000/test-push # 可以在main.cpp中修改映射关系
+```
 
 # 项目所需技术
 
 ## 服务器端
 
-### 缓存FLV数据
+### FLV
+FLV文件由一个FileHeader起头 后面为若干个FileTag 直到文件结束前四个字节
+最后四个字节是上一个FileTag的大小减去4
 
 FLV文件格式
 ```
@@ -61,7 +110,12 @@ class FileTag
 
 	char* data;
 };
+```
 
+前三个Tag可以认为有特殊作用 所以单独说一下
+
+以后的所有Tag均为音视频数据
+```
 FileHeader file_header; // 每次开始都要发送一次
 FileTag info_tag; // 每次开始都要发送一次
 FileTag sps_pps_tag; // 每次开始都要发送一次 第一个视频tag存储编码信息
@@ -72,7 +126,7 @@ FileTag data[N]; // 真正的数据部分
 
 每次有`观看者客户端`连接的时候 都要发送一次`file_header`,`info_tag`和`sps_pps_tag` 以及`audio_tag`之后便是数据部分
 
-### 解析RTMP协议 从中得到音视频流
+### RTMP
 
 #### RTMP握手协议
 Obs客户端首先会发送C1 服务器端直接将C1作为S1发送回去, Obs会发送C2 服务端继续发送C1作为S2 握手成功
@@ -99,6 +153,7 @@ connect
 -->
 releaseStream
 FCPublish
+createStream
 <-- _result()
 [03 00 00 00 00 00 1d 14 00 00 00 00 02 00 07 5f 72 65 73 75 6c 74 00 40 10 00 00 00 00 00 00 05 00 3f f0 00 00 00 00 00 00]
 
@@ -171,57 +226,79 @@ fmt = 3 0字节
 不含头 一个消息被分成多个的时候 使用这个类型
 ```
 
+至于`Chunk Data`就是Flv的data部分
+
 Obs发送`@SetDataFrame()`其中Data为info_tag的data部分
 Obs发送`Audio Data`其中Data为audio_tag的data部分  音频数据包
 Obs发送`Video Data`其中Data为sps_pps_tag的data部分  视频数据包
 
-之后便是数据的发送.
+之后便是正常画面声音的Flv数据发送.
 
 # 文件介绍
-
 ```
-├── CMakeLists.txt 总配置文件
-├── CMakeSettings.json vsstudio2019 cmake项目配置文件
-├── main.cpp 接收Obs推流数据 除去握手和建立连接部分 保存到data中 实测会导致 obs发送的publish也被保存
-├── network 网络核心模块
-│   ├── Acceptor.cpp
-│   ├── Acceptor.h
-│   ├── Callback.h
-│   ├── Channel.cpp
-│   ├── Channel.h
-│   ├── CMakeLists.txt
-│   ├── Epoll.cpp
-│   ├── Epoll.h
-│   ├── EventLoop.cpp
-│   ├── EventLoop.h
-│   ├── InetAddress.cpp
-│   ├── InetAddress.h
-│   ├── Socket.cpp
-│   ├── Socket.h
-│   ├── SocketOps.cpp
-│   ├── SocketOps.h
-│   ├── TcpConnection.cpp
-│   ├── TcpConnection.h
-│   ├── TcpServer.cpp
-│   └── TcpServer.h
-├── server
-│   ├── CMakeLists.txt
-│   ├── codec 编解码器 用于解析数据流 Flv和Rtmp的数据包解析位置以及相关数据包格式
-│   │   ├── FlvCodec.cpp 供FlvManager使用 不直接使用
-│   │   ├── FlvCodec.h
-│   │   ├── RtmpCodec.cpp 供RtmpManager使用 不直接使用 包含Rtmp数据包到Flv数据包的转换函数
-│   │   └── RtmpCodec.h
-│   ├── FlvManager.cpp Flv管理器用于保存解析好的多个FlvTag信息, 管理Flv解析过程
-│   ├── FlvManager.h
-│   ├── RtmpManager.cpp Rtmp管理器用于将解析好的Rtmp转换成Flv数据包 保存到FlvManager中, 管理Rtmp流解析过程
-│   ├── RtmpManager.h
-│   └── test
-│       ├── FlvManagerTest.cpp 测试FlvManager对正常Flv文件的解析 以及相关数据的存储
-│       └── RtmpManagerTest.cpp 测试RTMPManager对Rtmp数据流的解析 转换成Flv数据保存 并将Flv数据保存为Flv文件
-└── utils 工具类
-    ├── Buffer.cpp 通用缓冲区
+├── CMakeLists.txt
+├── main.cpp
+├── network # 网络部分学习自muduo
+│   ├── Acceptor.cpp
+│   ├── Acceptor.h
+│   ├── Callback.h
+│   ├── Channel.cpp
+│   ├── Channel.h
+│   ├── EventLoop.cpp
+│   ├── EventLoop.h
+│   ├── InetAddress.cpp
+│   ├── InetAddress.h
+│   ├── multiplexing
+│   │   ├── Epoll.cpp
+│   │   ├── Epoll.h
+│   │   ├── MultiplexingBase.cpp
+│   │   ├── MultiplexingBase.h
+│   │   ├── Select.cpp
+│   │   └── Select.h
+│   ├── PlatformNetwork.cpp # 网络跨平台相关学习自flamingo
+│   ├── PlatformNetwork.h # 网络跨平台相关学习自flamingo
+│   ├── protocol # 将Rtmp推流者和HTTPFlv拉流者的TCP连接包装
+│   │   ├── RtmpClientConnection.cpp
+│   │   ├── RtmpClientConnection.h
+│   │   ├── RtmpServerConnection.cpp
+│   │   └── RtmpServerConnection.h
+│   ├── Socket.cpp
+│   ├── Socket.h
+│   ├── SocketOps.cpp
+│   ├── SocketOps.h
+│   ├── TcpConnection.cpp
+│   ├── TcpConnection.h
+│   ├── TcpServer.cpp
+│   ├── TcpServer.h
+│   └── test
+│       └── TcpServerTest.cpp
+└── utils
+    ├── Buffer.cpp
     ├── Buffer.h
-    ├── CMakeLists.txt
-    ├── File.cpp 文件对象 用于简单的读写文件
-    └── File.h
+    ├── codec
+    │   ├── FlvCodec.cpp # FLV解析
+    │   ├── FlvCodec.h
+    │   ├── FlvManager.cpp # 管理FLV的解析 保存重要的几个Tag
+    │   ├── FlvManager.h
+    │   ├── RtmpCodec.cpp # Rtmp解析
+    │   ├── RtmpCodec.h
+    │   ├── RtmpManager.cpp # 管理Rtmp解析 将Rtmp数据部分转换成FlvTag
+    │   ├── RtmpManager.h
+    │   └── test
+    │       ├── FlvManagerTest.cpp
+    │       └── RtmpManagerTest.cpp
+    ├── File.cpp # 文件读写工具类
+    ├── File.h
+    ├── Format.cpp # 字符串格式化
+    ├── Format.h
+    ├── Logger.cpp # 简易低性能日志
+    ├── Logger.h
+    ├── PlatformBase.cpp # 基础部分跨平台代码
+    ├── PlatformBase.h
+    ├── test
+    │   └── LoggerTest.cpp
+    ├── Timestamp.cpp
+    └── Timestamp.h
+
+8 directories, 55 files
 ```
