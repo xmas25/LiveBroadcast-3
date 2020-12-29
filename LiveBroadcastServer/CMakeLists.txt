@@ -18,31 +18,13 @@ set(NETWORK_SRCS
 		network/Channel.cpp
 		network/InetAddress.cpp
 		network/SocketOps.cpp
+		network/Callback.h
 		network/multiplexing/Epoll.cpp
 		network/multiplexing/MultiplexingBase.cpp
 		network/multiplexing/Select.cpp
 		network/PlatformNetwork.cpp
         network/protocol/RtmpServerConnection.cpp
         network/protocol/RtmpClientConnection.cpp
-		)
-
-set(NETWORK_HEADERS
-		network/TcpServer.h
-		network/Socket.h
-		network/TcpConnection.h
-		network/EventLoop.h
-		network/Acceptor.h
-		network/multiplexing/Epoll.h
-		network/Channel.h
-		network/InetAddress.h
-		network/SocketOps.h
-		network/Callback.h
-		network/multiplexing/Epoll.h
-		network/multiplexing/MultiplexingBase.h
-		network/multiplexing/Select.h
-		network/PlatformNetwork.h
-        network/protocol/RtmpServerConnection.h
-        network/protocol/RtmpClientConnection.h
 		)
 
 set(UTILS_SRCS
@@ -56,18 +38,6 @@ set(UTILS_SRCS
 		utils/Logger.cpp
 		utils/Format.cpp
 		)
-
-set(UTILS_HEADERS
-		utils/codec/FlvManager.h
-		utils/codec/RtmpManager.h
-		utils/codec/RtmpCodec.h
-		utils/codec/FlvCodec.h
-		utils/Buffer.h
-		utils/File.h
-		utils/Timestamp.h
-		utils/Logger.h
-		utils/Format.cpp
-)
 
 # 后续会修改为模块化 因为过早模块化 会导致每次修改代码后需要rebuild才能更新 故临时使用这种方式
 
