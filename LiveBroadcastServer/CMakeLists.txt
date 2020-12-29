@@ -6,6 +6,8 @@ set(CMAKE_CXX_FLAGS "-Wall -Werror -std=c++17")
 
 include_directories(${CMAKE_SOURCE_DIR})
 
+zlink_directories(/usr/lib64/mysql)
+
 set(NETWORK_SRCS
 		network/TcpServer.cpp
 		network/Socket.cpp
@@ -81,3 +83,13 @@ if(WIN32)
 	target_link_libraries(LiveBroadcastServer ws2_32)
 	target_link_libraries(TcpServerTest ws2_32)
 endif()
+
+
+set(DB_MYSQL_SRC
+		mysql/DbMysql.cpp
+		mysql/QueryResult.cpp
+		mysql/Field.cpp
+)
+
+add_executable(DbMysqlTest mysql/test/DbMysqlTest.cpp ${DB_MYSQL_SRC})
+target_link_libraries(DbMysqlTest mysqlclient)
