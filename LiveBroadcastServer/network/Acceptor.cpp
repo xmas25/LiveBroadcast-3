@@ -9,7 +9,7 @@ void DefaultNewConnection(SOCKET fd, const InetAddress& address)
 Acceptor::Acceptor(EventLoop* loop, const std::string& server_name, const InetAddress& address) :
 	loop_(loop),
 	name_(server_name + '-' + "acceptor"),
-	listenfd_(socketops::Socket(address.GetFamily())),
+	listenfd_(socketops::CreateDefaultSocket(address.GetFamily())),
 	channel_(loop, name_, listenfd_.GetSockFd()),
 	newconnection_callback_(DefaultNewConnection)
 {

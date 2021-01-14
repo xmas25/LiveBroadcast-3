@@ -6,7 +6,7 @@ set(CMAKE_CXX_FLAGS "-Wall -Werror -std=c++17")
 
 include_directories(${CMAKE_SOURCE_DIR})
 
-zlink_directories(/usr/lib64/mysql)
+link_directories(/usr/lib64/mysql)
 
 set(NETWORK_SRCS
 		network/TcpServer.cpp
@@ -25,6 +25,8 @@ set(NETWORK_SRCS
 		network/PlatformNetwork.cpp
         network/protocol/RtmpServerConnection.cpp
         network/protocol/RtmpClientConnection.cpp
+		network/TcpClient.cpp
+		network/Connector.cpp
 		)
 
 set(UTILS_SRCS
@@ -48,6 +50,8 @@ add_executable(LiveBroadcastServer main.cpp ${NETWORK_SRCS} ${NETWORK_HEADERS} $
 add_executable(LoggerTest utils/test/LoggerTest.cpp utils/Logger.h utils/Logger.cpp utils/PlatformBase.h utils/PlatformBase.cpp)
 
 add_executable(TcpServerTest network/test/TcpServerTest.cpp ${NETWORK_SRCS} ${NETWORK_HEADERS} ${UTILS_SRCS} ${UTILS_HEADERS})
+
+add_executable(ConnectorTest network/test/ConnectorTest.cpp ${NETWORK_SRCS} ${NETWORK_HEADERS} ${UTILS_SRCS} ${UTILS_HEADERS})
 
 if(WIN32)
 	target_link_libraries(LiveBroadcastServer ws2_32)

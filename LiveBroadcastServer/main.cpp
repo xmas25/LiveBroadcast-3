@@ -1,8 +1,6 @@
 ﻿// LiveBroadcastServer.cpp : Defines the entry point for the application.
 //
 #include <iostream>
-#include <unistd.h>
-#include <ctime>
 #include <csignal>
 
 #include "network/TcpServer.h"
@@ -18,9 +16,6 @@ NetworkInitializer init;
 #endif
 
 std::map<std::string, RtmpServerConnection*> rtmp_connection_map;
-
-/** 客户端名称对应的 RtmpServerConnection */
-std::map<std::string, RtmpServerConnection*> client_server_map;
 
 void OnShakeHandSuccess(RtmpServerConnection* server_connection)
 {
@@ -70,7 +65,6 @@ void OnClientMessage(const TcpConnectionPtr& connection_ptr, Buffer* buffer, Tim
 	{
 		LOG_INFO("connection: %s, request url: %s success", connection_ptr->GetConnectionName().c_str(),
 				url.c_str());
-		client_server_map[connection_ptr->GetConnectionName()] = server_connection;
 		server_connection->AddClientConnection(
 				std::make_shared<RtmpClientConnection>(connection_ptr));
 	}

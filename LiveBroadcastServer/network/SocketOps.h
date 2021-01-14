@@ -5,11 +5,15 @@
 
 namespace socketops
 {
-	SOCKET Socket(int family);
+	SOCKET CreateDefaultSocket(int family);
+
+	SOCKET CreateNonblockSocket(int family);
 
 	int Htons(int port);
 
 	void Bind(SOCKET sockfd, const sockaddr& address);
+
+	int Connect(SOCKET sockfd, const sockaddr& address);
 
 	void Listen(SOCKET sockfd);
 
@@ -21,7 +25,11 @@ namespace socketops
 
 	ssize_t Send(SOCKET sockfd, const char* data, size_t length);
 
-	void ShutdownWrite(int sockfd);
+	void Close(SOCKET sockfd);
+
+	void ShutdownWrite(SOCKET sockfd);
+
+	sockaddr_in6 GetPeerAddr(SOCKET sockfd);
 }
 
 #endif // !NETWORK_SOCKETOPS

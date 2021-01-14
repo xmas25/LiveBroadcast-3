@@ -9,6 +9,7 @@ class InetAddress
 {
 public:
 	InetAddress();
+	InetAddress(sockaddr_in6 addr);
 	explicit InetAddress(uint16_t port, bool ipv6 = false);
 
 	std::string ToIpPort() const;

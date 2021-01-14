@@ -15,6 +15,7 @@ public:
 		CHANNEL_STATUS_DEL
 	};
 
+	Channel(EventLoop* loop, SOCKET sockfd);
 	Channel(EventLoop* loop, const std::string& connection_name, SOCKET sockfd);
 
 	void SetEvent(uint32_t ev);

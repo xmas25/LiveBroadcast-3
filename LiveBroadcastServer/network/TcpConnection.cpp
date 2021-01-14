@@ -118,13 +118,14 @@ void TcpConnection::OnClose()
 {
 	connection_status_ = DISCONNECTED;
 	channel_.DisableAll();
-	if (connection_close_callback_)
-	{
-		connection_close_callback_(shared_from_this());
-	}
+
 	if (connection_callback_)
 	{
 		connection_callback_(shared_from_this());
+	}
+	if (connection_close_callback_)
+	{
+		connection_close_callback_(shared_from_this());
 	}
 }
 
@@ -241,4 +242,18 @@ void TcpConnection::Shutdown()
 bool TcpConnection::HasRemainData() const
 {
 	return send_buffer_.ReadableLength() != 0;
+}
+
+void TcpConnection::ConnectDestroyed()
+{
+	if (connection_status_ == CONNECTED)
+	{
+		connection_status_ = DISCONNECTED;
+		channel_.DisableAll();
+		if (connection_callback_)
+		{
+			connection_callback_(shared_from_this());
+		}
+	}
+
 }

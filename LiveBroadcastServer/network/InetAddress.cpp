@@ -7,6 +7,12 @@ InetAddress::InetAddress()
 {
 }
 
+InetAddress::InetAddress(sockaddr_in6 addr)
+{
+	family_ = AF_INET6;
+	addr_ipv6 = addr;
+}
+
 InetAddress::InetAddress(uint16_t port, bool ipv6) :
 	family_(ipv6 ? AF_INET6 : AF_INET)
 {

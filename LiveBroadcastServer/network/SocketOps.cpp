@@ -1,9 +1,15 @@
 #include <cassert>
+#include <unistd.h>
 #include "network/SocketOps.h"
 
-SOCKET socketops::Socket(int family)
+SOCKET socketops::CreateDefaultSocket(int family)
 {
-	return ::socket(family, SOCK_STREAM, 0);
+	return ::socket(family, SOCK_STREAM | SOCK_CLOEXEC, 0);
+}
+
+SOCKET socketops::CreateNonblockSocket(int family)
+{
+	return ::socket(family, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC, 0);
 }
 
 int socketops::Htons(int port)
@@ -15,6 +21,11 @@ void socketops::Bind(SOCKET sockfd, const sockaddr& address)
 {
 	int ret = ::bind(sockfd, &address, static_cast<socklen_t>(sizeof(struct sockaddr_in6)));
 	assert(ret != -1);
+}
+
+int socketops::Connect(SOCKET sockfd, const sockaddr& address)
+{
+	return ::connect(sockfd, &address, static_cast<socklen_t>(sizeof address));
 }
 
 void socketops::Listen(SOCKET sockfd)
@@ -59,12 +70,25 @@ SOCKET socketops::Accept(SOCKET sockfd, struct sockaddr* address)
 	return fd;
 }
 
+void socketops::Close(int sockfd)
+{
+	::close(sockfd);
+}
+
 ssize_t socketops::Send(SOCKET sockfd, const char* data, size_t length)
 {
 	return send(sockfd, data, length, 0);
 }
 
-void socketops::ShutdownWrite(int sockfd)
+void socketops::ShutdownWrite(SOCKET sockfd)
 {
 	::shutdown(sockfd, SHUT_WR);
+}
+
+sockaddr_in6 socketops::GetPeerAddr(SOCKET sockfd)
+{
+	struct sockaddr_in6 peer_addr;
+	socklen_t len = static_cast<socklen_t>(sizeof peer_addr);
+	getpeername(sockfd, (sockaddr*)&peer_addr, &len);
+	return peer_addr;
 }

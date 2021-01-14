@@ -16,9 +16,9 @@ namespace Format
 	std::string ToHexString(size_t decimal_num);
 
 	/**
-	 * 将十进制数字 转换为十六进制样式的字符串 同时尾部附加 \r\n
+	 * 将十进制数字 转换为十六进制样式的字符串 同时尾部附加 CRLF
 	 * @param decimal_num 如10
-	 * @return "a\r\n"
+	 * @return
 	 */
 	std::string ToHexStringWithCrlf(size_t decimal_num);
 
