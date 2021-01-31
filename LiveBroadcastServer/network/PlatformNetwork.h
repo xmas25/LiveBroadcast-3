@@ -37,6 +37,9 @@ std::string GetLastErrorAsString();
 #include <ws2tcpip.h>
 #include <windows.h>
 
+#define SOCK_NONBLOCK 0
+#define SOCK_CLOEXEC 0
+
 class NetworkInitializer
 {
 public:

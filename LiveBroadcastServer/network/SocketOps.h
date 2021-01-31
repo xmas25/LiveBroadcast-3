@@ -30,6 +30,24 @@ namespace socketops
 	void ShutdownWrite(SOCKET sockfd);
 
 	sockaddr_in6 GetPeerAddr(SOCKET sockfd);
+
+	int InetPton(int af, const char* from, void* to);
+
+	/**
+	 * 将地址转换为网络地址
+	 * @param name 域名或者ip地址
+	 * @param addr 网络地址 ipv4
+	 * @return 转换成功true
+	 */
+	bool NameToAddr4(const std::string& name, in_addr* addr);
+
+	/**
+	* 将地址转换为网络地址
+	* @param name 域名或者ip地址
+	* @param addr 网络地址 ipv6
+	* @return 转换成功true
+	*/
+	void NameToAddr6(const std::string& name, in6_addr* addr);
 }
 
 #endif // !NETWORK_SOCKETOPS

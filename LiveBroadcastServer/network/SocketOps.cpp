@@ -1,6 +1,8 @@
 #include <cassert>
 #include <unistd.h>
+#include <netdb.h>
 #include "network/SocketOps.h"
+#include "utils/Logger.h"
 
 SOCKET socketops::CreateDefaultSocket(int family)
 {
@@ -70,7 +72,7 @@ SOCKET socketops::Accept(SOCKET sockfd, struct sockaddr* address)
 	return fd;
 }
 
-void socketops::Close(int sockfd)
+void socketops::Close(SOCKET sockfd)
 {
 	::close(sockfd);
 }
@@ -91,4 +93,32 @@ sockaddr_in6 socketops::GetPeerAddr(SOCKET sockfd)
 	socklen_t len = static_cast<socklen_t>(sizeof peer_addr);
 	getpeername(sockfd, (sockaddr*)&peer_addr, &len);
 	return peer_addr;
+}
+
+int socketops::InetPton(int af, const char* from, void* to)
+{
+	return ::inet_pton(af, from, to);
+}
+
+bool socketops::NameToAddr4(const std::string& name, in_addr* addr)
+{
+	if (InetPton(AF_INET, name.c_str(), addr) == 0)
+	{
+		hostent* host = gethostbyname(name.c_str());
+		if (host)
+		{
+			addr->s_addr = *((uint32_t*)host->h_addr);
+		}
+		else
+		{
+			LOG_ERROR("parse name: %s error", name.c_str());
+			return false;
+		}
+	}
+	return true;
+}
+
+void socketops::NameToAddr6(const std::string& name, in6_addr* addr)
+{
+
 }

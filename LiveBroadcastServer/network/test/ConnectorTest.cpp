@@ -27,10 +27,11 @@ void OnNewMessage(const TcpConnectionPtr& connection, Buffer* buffer, Timestamp 
 int main()
 {
 	EventLoop loop;
-	InetAddress address(4111, false);
+	InetAddress address("df.lsmg.xyz", 4000, false);
 	TcpClient tcp_client(&loop, address, "TestConnector");
 	tcp_client.SetConnectCallback(OnNewConnection);
 	tcp_client.SetNewMessageCallback(OnNewMessage);
+	tcp_client.SetReConnect(true);
 
 	tcp_client.Connect();
 	loop.Loop();

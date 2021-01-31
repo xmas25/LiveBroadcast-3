@@ -12,6 +12,8 @@ public:
 	InetAddress(sockaddr_in6 addr);
 	explicit InetAddress(uint16_t port, bool ipv6 = false);
 
+	InetAddress(const std::string& addr, uint16_t port, bool ipv6 = false);
+
 	std::string ToIpPort() const;
 
 	struct sockaddr* GetSockAddr();

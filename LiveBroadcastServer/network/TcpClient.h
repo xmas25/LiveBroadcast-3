@@ -25,7 +25,7 @@ public:
 	 * 设置可读回调
 	 * @param callback
 	 */
-	void SetNewMessageCallback(const NewMessageCallback& callback);\
+	void SetNewMessageCallback(const NewMessageCallback& callback);
 
 	/**
 	 * 设置连接结束回调
@@ -44,6 +44,12 @@ public:
 	 * 关闭连接
 	 */
 	void DisConnect();
+
+	/**
+	 * 设置断线重连状态
+	 * @param open true 开启断线重连 false 关闭
+	 */
+	void SetReConnect(bool open);
 private:
 
 	EventLoop* loop_;

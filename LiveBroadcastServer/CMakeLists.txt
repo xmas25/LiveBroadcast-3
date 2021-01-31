@@ -1,6 +1,6 @@
-﻿cmake_minimum_required (VERSION 2.8)
+cmake_minimum_required(VERSION 2.8)
 
-project ("LiveBroadcastServer")
+project("LiveBroadcastServer")
 
 set(CMAKE_CXX_FLAGS "-Wall -Werror -std=c++17")
 
@@ -56,6 +56,7 @@ add_executable(ConnectorTest network/test/ConnectorTest.cpp ${NETWORK_SRCS} ${NE
 if(WIN32)
 	target_link_libraries(LiveBroadcastServer ws2_32)
 	target_link_libraries(TcpServerTest ws2_32)
+	target_link_libraries(ConnectorTest ws2_32)
 endif()
 
 

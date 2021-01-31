@@ -51,6 +51,11 @@ void TcpClient::DisConnect()
 	RemoveConnection(connection_ptr_);
 }
 
+void TcpClient::SetReConnect(bool open)
+{
+	retry_ = true;
+}
+
 void TcpClient::OnNewConnection(SOCKET sockfd)
 {
 	InetAddress address(socketops::GetPeerAddr(sockfd));
@@ -93,6 +98,4 @@ void TcpClient::RemoveConnection(const TcpConnectionPtr& connection_ptr)
 	{
 		LOG_ERROR("Error")
 	}
-
-
 }

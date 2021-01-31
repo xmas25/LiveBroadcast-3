@@ -30,6 +30,20 @@ InetAddress::InetAddress(uint16_t port, bool ipv6) :
 	}
 }
 
+
+InetAddress::InetAddress(const std::string& addr, uint16_t port, bool ipv6) :
+	InetAddress(port, ipv6)
+{
+	if (ipv6)
+	{
+		socketops::NameToAddr6(addr, &addr_ipv6.sin6_addr);
+	}
+	else
+	{
+		socketops::NameToAddr4(addr, &addr_ipv4.sin_addr);
+	}
+}
+
 std::string InetAddress::ToIpPort() const
 {
 	char buffer[64]{};
