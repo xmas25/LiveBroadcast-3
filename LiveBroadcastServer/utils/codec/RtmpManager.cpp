@@ -386,6 +386,7 @@ RtmpManager::ShakeHandPackType RtmpManager::ParseShakeHand(Buffer* buffer)
 				shake_hand_status_ = SHAKE_RTMP_FCPUBLISH;
 				return SHAKE_RTMP_RELEASE_STREAM;
 			}
+			break;
 		}
 		case SHAKE_RTMP_FCPUBLISH:
 		{

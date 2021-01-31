@@ -9,13 +9,28 @@
 #include "network/protocol/RtmpServerConnection.h"
 #include "utils/Logger.h"
 #include "utils/Format.h"
-
+#include "mapper/UserMapper.h"
 
 #ifdef _WIN32
 NetworkInitializer init;
 #endif
 
 std::map<std::string, RtmpServerConnection*> rtmp_connection_map;
+UserMapper user_mapper_;
+
+bool OnAuthenticate(const std::string& user, const std::string& passwd)
+{
+	if (user_mapper_.GetPasswdByUser(user) == passwd)
+	{
+		return true;
+	}
+	else
+	{
+		LOG_WARN("user: %s, use wrong passwd: %s", user.c_str(), passwd.c_str())
+		return false;
+	}
+
+}
 
 void OnShakeHandSuccess(RtmpServerConnection* server_connection)
 {
@@ -39,6 +54,7 @@ void OnConnection(const TcpConnectionPtr& connection_ptr)
 
 		// 连接建立后RtmpServerConnection内部会进行握手 然后握手成功后调用函数
 		server_connection->SetShakeHandSuccessCallback(OnShakeHandSuccess);
+		server_connection->SetAuthenticationCallback(OnAuthenticate);
 
 		/**
 		 * 连接建立后 设置握手回调函数
@@ -91,6 +107,13 @@ int main(int argc, char* argv[])
 		printf("wrong number of parameters\r\n");
 		exit(-1);
 	}
+
+	if (!user_mapper_.Initialize(
+			"192.168.80.160", "lsmg", "123456789", "live_test"))
+	{
+		exit(-1);
+	}
+
 
 	short main_server_port = atoi(argv[1]);
 	short client_server_port = atoi(argv[2]);

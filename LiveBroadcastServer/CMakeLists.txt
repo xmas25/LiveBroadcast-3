@@ -62,7 +62,8 @@ set(ALL_SRCS
 
 add_executable(RtmpManagerTest utils/codec/test/RtmpManagerTest.cpp ${UTILS_SRCS} ${UTILS_HEADERS})
 
-add_executable(LiveBroadcastServer main.cpp ${NETWORK_SRCS} ${NETWORK_HEADERS} ${UTILS_SRCS} ${UTILS_HEADERS})
+add_executable(LiveBroadcastServer main.cpp ${ALL_SRCS})
+target_link_libraries(LiveBroadcastServer mysqlclient)
 
 add_executable(LoggerTest utils/test/LoggerTest.cpp utils/Logger.h utils/Logger.cpp utils/PlatformBase.h utils/PlatformBase.cpp)
 
