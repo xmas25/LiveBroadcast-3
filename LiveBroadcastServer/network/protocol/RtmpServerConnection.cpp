@@ -41,8 +41,11 @@ RtmpServerConnection::ShakeHandResult RtmpServerConnection::ShakeHand(Buffer* bu
 				connection_ptr_->Send(RTMP_SERVER_CONNECT_RESULT, sizeof RTMP_SERVER_CONNECT_RESULT);
 				break;
 			}
+			/** 解析完release包后 进行用户校验*/
 			case RtmpManager::SHAKE_RTMP_RELEASE_STREAM:
-				break;
+			{
+				return SHAKE_AUTHENTICATE;
+			}
 			case RtmpManager::SHAKE_RTMP_FCPUBLISH:
 				break;
 			case RtmpManager::SHAKE_RTMP_CREATE_STREAM:
@@ -118,6 +121,19 @@ void RtmpServerConnection::OnConnectionShakeHand(const TcpConnectionPtr& connect
 	RtmpServerConnection::ShakeHandResult result = ShakeHand(buffer);
 	switch (result)
 	{
+		case RtmpServerConnection::SHAKE_AUTHENTICATE:
+		{
+			if (!Authenticate())
+			{
+				LOG_WARN("connection: %s authenticate failed",
+						connection_ptr->GetConnectionName().c_str());
+				connection_ptr->Shutdown();
+				/**
+				 * 校验出错时返回
+				 */
+				return;
+			}
+		}
 		case RtmpServerConnection::SHAKE_SUCCESS:
 		{
 			LOG_INFO("connection: %s shake hand success",
@@ -196,6 +212,11 @@ std::string RtmpServerConnection::GetConnectionName() const
 	return connection_ptr_->GetConnectionName();
 }
 
+void RtmpServerConnection::SetAuthenticationCallback(const AuthenticationCallback& callback)
+{
+	authentication_callback_ = callback;
+}
+
 void RtmpServerConnection::SendHeaderToClientConnection(
 		const RtmpClientConnectionPtr& client_connection_ptr)
 {
@@ -231,4 +252,20 @@ void RtmpServerConnection::OnConnectionClose(const TcpConnectionPtr& connection_
 	client_connection_map_.erase(connection_ptr->GetConnectionName());
 	LOG_INFO("client: %s, remove from server: %s", connection_ptr->GetConnectionName().c_str(),
 			connection_ptr_->GetConnectionName().c_str());
+}
+
+bool RtmpServerConnection::Authenticate()
+{
+	std::string username = GetRtmpPath();
+	std::string password = rtmp_manager_.GetPasswordFromReleasePack();
+
+	if (authentication_callback_)
+	{
+		if (!authentication_callback_(username, password))
+		{
+			return false;
+		}
+	}
+
+	return true;
 }

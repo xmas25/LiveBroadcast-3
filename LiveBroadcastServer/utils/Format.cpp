@@ -25,7 +25,7 @@ std::string Format::GetUrl(const std::string& str)
 	{
 		url_end--;
 	}
-	return str.substr(url_begin, url_end - url_begin);
+	return str.substr(url_begin + 1, url_end - url_begin - 1);
 }
 
 std::string Format::GetPathFromUrl(const std::string& url)
@@ -40,5 +40,5 @@ std::string Format::GetPathFromUrl(const std::string& url)
 	{
 		path_len--;
 	}
-	return path.substr(0, path_len);
+	return path.substr(1, path_len - 1);
 }

@@ -46,6 +46,11 @@ public:
 
 	FlvManager* GetFlvManager();
 
+	/**
+	 * 解析握手数据
+	 * @param buffer
+	 * @return 此轮解析时的状态
+	 */
 	ShakeHandPackType ParseShakeHand(Buffer* buffer);
 
 	size_t GetParsedLength() const;
@@ -53,6 +58,9 @@ public:
 	void SetNewFlvTagCallback(const NewFlvTagCallback& callback);
 
 	std::string GetUrlFromConnectPack() const;
+
+	std::string GetPasswordFromReleasePack();
+
 private:
 
 	ParseStatus parsed_status_;
@@ -76,6 +84,8 @@ private:
 	FlvTagPtr last_flv_ptr_;
 
 	RtmpPack connect_pack_;
+
+	RtmpPack release_pack_;
 
 	ssize_t ParseFirstHeader(Buffer* buffer);
 	ssize_t ParseScriptPack(Buffer* buffer, RtmpPack* script_pack);

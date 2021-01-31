@@ -1,5 +1,6 @@
 #include <cassert>
 #include "utils/codec/RtmpManager.h"
+#include "utils/Format.h"
 
 RtmpManager::RtmpManager():
 		parsed_status_(RtmpManager::PARSE_FIRST_HEADER),
@@ -106,6 +107,13 @@ std::string RtmpManager::GetUrlFromConnectPack() const
 	auto begin_idx = body_str.find("rtmp");
 	size_t len = strlen(&body_str[begin_idx]);
 	return body_str.substr(begin_idx, len);
+}
+
+std::string RtmpManager::GetPasswordFromReleasePack()
+{
+	const char* release_buffer_begin = release_pack_.GetBuffer()->ReadBegin();
+	int len = release_buffer_begin[28];
+	return std::string(&release_buffer_begin[29], len);
 }
 
 ssize_t RtmpManager::ParseFirstHeader(Buffer* buffer)
@@ -372,14 +380,12 @@ RtmpManager::ShakeHandPackType RtmpManager::ParseShakeHand(Buffer* buffer)
 		}
 		case SHAKE_RTMP_RELEASE_STREAM:
 		{
-			RtmpPack release_pack;
-			parse = ParseHeaderAndBody(buffer, &release_pack);
+			parse = ParseHeaderAndBody(buffer, &release_pack_);
 			if (parse > 0)
 			{
 				shake_hand_status_ = SHAKE_RTMP_FCPUBLISH;
 				return SHAKE_RTMP_RELEASE_STREAM;
 			}
-			break;
 		}
 		case SHAKE_RTMP_FCPUBLISH:
 		{
