@@ -22,7 +22,7 @@ void OnShakeHandSuccess(RtmpServerConnection* server_connection)
 	/**
 	 * 将推流的url和server_connection关联起来 用于拉流的时候根据url获取对应的server_connection
 	 *
-	 * rtmp链接到server_connection 映射关系可以自己修改
+	 * rtmp到server_connection 映射关系可以自己修改
 	 */
 	std::string path = server_connection->GetRtmpPath();
 	rtmp_connection_map[path] = server_connection;
@@ -30,11 +30,14 @@ void OnShakeHandSuccess(RtmpServerConnection* server_connection)
 			path.c_str());
 }
 
+/** 主播建立连接后的回调函数*/
 void OnConnection(const TcpConnectionPtr& connection_ptr)
 {
 	if (connection_ptr->Connected())
 	{
 		RtmpServerConnection* server_connection = new RtmpServerConnection(connection_ptr);
+
+		// 连接建立后RtmpServerConnection内部会进行握手 然后握手成功后调用函数
 		server_connection->SetShakeHandSuccessCallback(OnShakeHandSuccess);
 
 		/**

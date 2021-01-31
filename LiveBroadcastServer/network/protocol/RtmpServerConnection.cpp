@@ -71,50 +71,6 @@ RtmpServerConnection::ShakeHandResult RtmpServerConnection::ShakeHand(Buffer* bu
 	}
 }
 
-ssize_t RtmpServerConnection::WriteToFile(File* file_write)
-{
-	LOG_INFO("connection: %s start write data to file", connection_ptr_->GetConnectionName().c_str());
-
-	/**
-	 * 写文件头 包含header, 脚本Tag, 第一个音频和第一个视频Tag
-	 */
-	FlvManager* flv_manager = rtmp_manager_.GetFlvManager();
-
-	const Buffer* buffer = GetHeaderDataBuffer();
-	file_write->Write(buffer);
-
-
-	/**
-	 * 写文件体
-	 */
-	std::vector<FlvTag*>* flv_tags = flv_manager->GetFlvTags();
-
-	ssize_t write_bytes;
-	size_t sum_write_bytes = buffer->ReadableLength();
-	for (FlvTag* tag : *flv_tags)
-	{
-		write_bytes = file_write->Write(tag->GetHeader(), FlvTag::FLV_TAG_HEADER_LENGTH);
-		sum_write_bytes += write_bytes;
-
-		write_bytes = file_write->Write(tag->GetBody());
-		sum_write_bytes += write_bytes;
-	}
-
-	/**
-	 * 文件尾部为最后一个tag的大小
-	 */
-	uint32_t previous_tag_size = (flv_tags->at(flv_tags->size() - 1))->GetCurrentTagSize();
-	previous_tag_size = htonl(previous_tag_size);
-	file_write->Write((char*)&previous_tag_size, sizeof previous_tag_size);
-
-	LOG_INFO("connection: %s write %zu bytes to %s success",
-			connection_ptr_->GetConnectionName().c_str(),
-			sum_write_bytes,
-			file_write->GetPath().c_str());
-
-	return sum_write_bytes;
-}
-
 ssize_t RtmpServerConnection::ParseData(Buffer* buffer)
 {
 	ssize_t result = rtmp_manager_.ParseData(buffer);

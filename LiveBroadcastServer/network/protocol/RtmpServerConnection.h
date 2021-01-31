@@ -32,13 +32,6 @@ public:
 
 	explicit RtmpServerConnection(const TcpConnectionPtr& connection_ptr);
 
-	/**
-	 * 将当前Tag数据保存到文件中
-	 * @param file_write 与保存到的文件
-	 * @return 写入的字节数
-	 */
-	ssize_t WriteToFile(File* file_write);
-
 	ssize_t ParseData(Buffer* buffer);
 
 	const Buffer* GetHeaderDataBuffer();
