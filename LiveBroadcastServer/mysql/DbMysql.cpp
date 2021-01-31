@@ -2,6 +2,7 @@
 // Created by rjd67 on 2020/12/27.
 //
 #include <cstring>
+#include <mysql/errmsg.h>
 #include "mysql/DbMysql.h"
 #include "utils/Logger.h"
 
@@ -36,6 +37,8 @@ bool DbMysql::Initialize(const std::string& host, const std::string& user, const
 	db_info_.db_name = db_name;
 
 	mysql_ = mysql_init(mysql_);
+
+	/** port 0 使用默认端口*/
 	MYSQL* result = mysql_real_connect(mysql_, host.c_str(), user.c_str(), passwd.c_str(),
 			db_name.c_str(), 0, nullptr, 0);
 

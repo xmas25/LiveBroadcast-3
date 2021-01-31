@@ -7,11 +7,8 @@
 
 #include <mysql/mysql.h>
 #include <string>
-#include <memory>
 
 #include "QueryResult.h"
-
-typedef std::shared_ptr<QueryResult> QueryResultPtr;
 
 class DbMysql
 {

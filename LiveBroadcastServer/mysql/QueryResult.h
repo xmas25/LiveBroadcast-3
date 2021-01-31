@@ -7,6 +7,7 @@
 
 #include <mysql/mysql.h>
 #include <map>
+#include <memory>
 #include "mysql/Field.h"
 
 /**
@@ -48,5 +49,6 @@ private:
 	uint64_t num_rows_;
 };
 
+typedef std::shared_ptr<QueryResult> QueryResultPtr;
 
 #endif //LIVEBROADCASTSERVER_QUERYRESULT_H

@@ -41,6 +41,23 @@ set(UTILS_SRCS
 		utils/Format.cpp
 		)
 
+set(DB_MYSQL_SRC
+		mysql/DbMysql.cpp
+		mysql/QueryResult.cpp
+		mysql/Field.cpp
+		)
+
+set(MAPPER_SRCS
+		mapper/UserMapper.cpp
+)
+
+set(ALL_SRCS
+		${NETWORK_SRCS}
+		${UTILS_SRCS}
+		${DB_MYSQL_SRC}
+		${MAPPER_SRCS}
+)
+
 # 后续会修改为模块化 因为过早模块化 会导致每次修改代码后需要rebuild才能更新 故临时使用这种方式
 
 add_executable(RtmpManagerTest utils/codec/test/RtmpManagerTest.cpp ${UTILS_SRCS} ${UTILS_HEADERS})
@@ -60,11 +77,8 @@ if(WIN32)
 endif()
 
 
-set(DB_MYSQL_SRC
-		mysql/DbMysql.cpp
-		mysql/QueryResult.cpp
-		mysql/Field.cpp
-)
-
 add_executable(DbMysqlTest mysql/test/DbMysqlTest.cpp ${DB_MYSQL_SRC})
 target_link_libraries(DbMysqlTest mysqlclient)
+
+add_executable(UserMapperTest mapper/test/UserMapperTest.cpp ${DB_MYSQL_SRC} ${MAPPER_SRCS} ${UTILS_SRCS})
+target_link_libraries(UserMapperTest mysqlclient)
