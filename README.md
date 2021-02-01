@@ -1,14 +1,12 @@
 # 项目说明
 
-**当前进度 支持多个RTMP推流者推流 支持多个HTTP-FLV拉流者拉取对应的流观看**
-
 **使用C++17标准 Windows和Centos平台均使用gcc编译通过正常使用**
 
 **运行后在两个推流者四个观看者情况下 占用内存6Mb CPU使用极低**
 
 **支持IPV4和IPV6**
 
-服务器端代码量 包含网络部分 5000余行
+服务器端代码量 包含网络部分 6000余行
 
 HttpFlv拉流的播放器目前测试通过PotPlayer, VLC, flv.js
 
@@ -28,22 +26,20 @@ HTTP包装 RTMP解析 FLV解析 参考自网络相关文档
 
 ## 开发进度
 
+### 服务器端
+
 支持多个RTMP推流者推流(已完成)
 
 支持多个HTTP-FLV拉流者拉取对应的流观看(已完成)
+
+推流者身份鉴定 Mysql查询账号密码(已完成)
+
+### 客户端
 
 开发`观看客户端`主要用于从`服务器端`接收FLV数据 本地转化成HttpFlv格式 供`HttpFlv拉流软件本地拉取` (未开发)
 
 `观看者客户端`可以从`服务器端`获取数据也可以通过P2P技术与其他`观看者客户端`进行共享 (未开发)
 
-## 初版
-
-主播使用`RTMP推流软件(如Obs)`将RTMP流发送到`服务器端` `服务器端`将Rtmp流解析生成FLV数据包装在HTTP中推送给观看者
-
-观看者直接使用`服务器端`生成的HTTPFLV地址 拉流观看
-
-
-## P2P版本 (未开发)
 
 # 使用说明
 
@@ -151,7 +147,7 @@ connect
 建立流
 ```
 -->
-releaseStream
+releaseStream 此包中包含Obs设置的推流密钥 可用于获取后身份鉴定
 FCPublish
 createStream
 <-- _result()
@@ -236,69 +232,87 @@ Obs发送`Video Data`其中Data为sps_pps_tag的data部分  视频数据包
 
 # 文件介绍
 ```
-├── CMakeLists.txt
-├── main.cpp
-├── network # 网络部分学习自muduo
+.
+├── CMakeLists.txt	总配置文件
+├── main.cpp	服务器端启动文件
+├── mapper 持久层
+│   ├── test
+│   │   └── UserMapperTest.cpp
+│   ├── UserMapper.cpp	提供根据账号查询密码功能
+│   └── UserMapper.h
+├── mysql mysql包装
+│   ├── DbMysql.cpp
+│   ├── DbMysql.h
+│   ├── Field.cpp
+│   ├── Field.h
+│   ├── QueryResult.cpp
+│   ├── QueryResult.h
+│   └── test
+│       └── DbMysqlTest.cpp
+├── network		网络层代码
 │   ├── Acceptor.cpp
 │   ├── Acceptor.h
 │   ├── Callback.h
 │   ├── Channel.cpp
 │   ├── Channel.h
+│   ├── Connector.cpp
+│   ├── Connector.h
 │   ├── EventLoop.cpp
 │   ├── EventLoop.h
 │   ├── InetAddress.cpp
 │   ├── InetAddress.h
-│   ├── multiplexing
+│   ├── multiplexing	多路复用包装
 │   │   ├── Epoll.cpp
 │   │   ├── Epoll.h
 │   │   ├── MultiplexingBase.cpp
 │   │   ├── MultiplexingBase.h
 │   │   ├── Select.cpp
 │   │   └── Select.h
-│   ├── PlatformNetwork.cpp # 网络跨平台相关学习自flamingo
-│   ├── PlatformNetwork.h # 网络跨平台相关学习自flamingo
-│   ├── protocol # 将Rtmp推流者和HTTPFlv拉流者的TCP连接包装
+│   ├── PlatformNetwork.cpp		网络跨平台代码
+│   ├── PlatformNetwork.h
+│   ├── protocol	Rtmp推流者和HttpFlv拉流者包装
 │   │   ├── RtmpClientConnection.cpp
 │   │   ├── RtmpClientConnection.h
 │   │   ├── RtmpServerConnection.cpp
 │   │   └── RtmpServerConnection.h
 │   ├── Socket.cpp
 │   ├── Socket.h
-│   ├── SocketOps.cpp
+│   ├── SocketOps.cpp 基础socketApi包装
 │   ├── SocketOps.h
+│   ├── TcpClient.cpp
+│   ├── TcpClient.h
 │   ├── TcpConnection.cpp
 │   ├── TcpConnection.h
 │   ├── TcpServer.cpp
 │   ├── TcpServer.h
 │   └── test
+│       ├── ConnectorTest.cpp
 │       └── TcpServerTest.cpp
 └── utils
-    ├── Buffer.cpp
+    ├── Buffer.cpp 通用缓冲类
     ├── Buffer.h
-    ├── codec
-    │   ├── FlvCodec.cpp # FLV解析
+    ├── codec	Flv Rtmp编解码器
+    │   ├── FlvCodec.cpp
     │   ├── FlvCodec.h
-    │   ├── FlvManager.cpp # 管理FLV的解析 保存重要的几个Tag
+    │   ├── FlvManager.cpp
     │   ├── FlvManager.h
-    │   ├── RtmpCodec.cpp # Rtmp解析
+    │   ├── RtmpCodec.cpp
     │   ├── RtmpCodec.h
-    │   ├── RtmpManager.cpp # 管理Rtmp解析 将Rtmp数据部分转换成FlvTag
+    │   ├── RtmpManager.cpp
     │   ├── RtmpManager.h
     │   └── test
     │       ├── FlvManagerTest.cpp
     │       └── RtmpManagerTest.cpp
-    ├── File.cpp # 文件读写工具类
+    ├── File.cpp
     ├── File.h
-    ├── Format.cpp # 字符串格式化
+    ├── Format.cpp
     ├── Format.h
-    ├── Logger.cpp # 简易低性能日志
+    ├── Logger.cpp
     ├── Logger.h
-    ├── PlatformBase.cpp # 基础部分跨平台代码
+    ├── PlatformBase.cpp 基础跨平台
     ├── PlatformBase.h
     ├── test
     │   └── LoggerTest.cpp
     ├── Timestamp.cpp
     └── Timestamp.h
-
-8 directories, 55 files
 ```

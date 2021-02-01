@@ -133,6 +133,7 @@ void RtmpServerConnection::OnConnectionShakeHand(const TcpConnectionPtr& connect
 				 */
 				return;
 			}
+			return;
 		}
 		case RtmpServerConnection::SHAKE_SUCCESS:
 		{
