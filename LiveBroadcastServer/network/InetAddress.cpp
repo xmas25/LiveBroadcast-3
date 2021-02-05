@@ -7,6 +7,12 @@ InetAddress::InetAddress()
 {
 }
 
+InetAddress::InetAddress(sockaddr_in6 addr)
+{
+	family_ = AF_INET6;
+	addr_ipv6 = addr;
+}
+
 InetAddress::InetAddress(uint16_t port, bool ipv6) :
 	family_(ipv6 ? AF_INET6 : AF_INET)
 {
@@ -21,6 +27,20 @@ InetAddress::InetAddress(uint16_t port, bool ipv6) :
 		memset(&addr_ipv4, 0, sizeof addr_ipv4);
 		addr_ipv4.sin_port = socketops::Htons(port);
 		addr_ipv4.sin_family = PF_INET;
+	}
+}
+
+
+InetAddress::InetAddress(const std::string& addr, uint16_t port, bool ipv6) :
+	InetAddress(port, ipv6)
+{
+	if (ipv6)
+	{
+		socketops::NameToAddr6(addr, &addr_ipv6.sin6_addr);
+	}
+	else
+	{
+		socketops::NameToAddr4(addr, &addr_ipv4.sin_addr);
 	}
 }
 

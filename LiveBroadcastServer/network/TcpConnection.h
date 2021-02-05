@@ -71,6 +71,8 @@ public:
 	 * @return true 存在未发送的数据待发送 false 不存在
 	 */
 	bool HasRemainData() const;
+
+	void ConnectDestroyed();
 private:
 	enum Status {DISCONNECTING, DISCONNECTED, CONNECTING, CONNECTED};
 

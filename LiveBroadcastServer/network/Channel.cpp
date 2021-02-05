@@ -2,6 +2,12 @@
 #include "network/EventLoop.h"
 #include "utils/Logger.h"
 
+Channel::Channel(EventLoop* loop, SOCKET sockfd):
+	Channel(loop, "default-connection-name", sockfd)
+{
+
+}
+
 Channel::Channel(EventLoop* loop, const std::string& connection_name, SOCKET fd) :
     loop_(loop),
 	connection_name(connection_name),

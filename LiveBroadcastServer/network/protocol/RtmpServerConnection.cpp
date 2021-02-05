@@ -41,8 +41,11 @@ RtmpServerConnection::ShakeHandResult RtmpServerConnection::ShakeHand(Buffer* bu
 				connection_ptr_->Send(RTMP_SERVER_CONNECT_RESULT, sizeof RTMP_SERVER_CONNECT_RESULT);
 				break;
 			}
+			/** 解析完release包后 进行用户校验*/
 			case RtmpManager::SHAKE_RTMP_RELEASE_STREAM:
-				break;
+			{
+				return SHAKE_AUTHENTICATE;
+			}
 			case RtmpManager::SHAKE_RTMP_FCPUBLISH:
 				break;
 			case RtmpManager::SHAKE_RTMP_CREATE_STREAM:
@@ -69,50 +72,6 @@ RtmpServerConnection::ShakeHandResult RtmpServerConnection::ShakeHand(Buffer* bu
 				return SHAKE_DATA_NOT_ENOUGH;
 		}
 	}
-}
-
-ssize_t RtmpServerConnection::WriteToFile(File* file_write)
-{
-	LOG_INFO("connection: %s start write data to file", connection_ptr_->GetConnectionName().c_str());
-
-	/**
-	 * 写文件头 包含header, 脚本Tag, 第一个音频和第一个视频Tag
-	 */
-	FlvManager* flv_manager = rtmp_manager_.GetFlvManager();
-
-	const Buffer* buffer = GetHeaderDataBuffer();
-	file_write->Write(buffer);
-
-
-	/**
-	 * 写文件体
-	 */
-	std::vector<FlvTag*>* flv_tags = flv_manager->GetFlvTags();
-
-	ssize_t write_bytes;
-	size_t sum_write_bytes = buffer->ReadableLength();
-	for (FlvTag* tag : *flv_tags)
-	{
-		write_bytes = file_write->Write(tag->GetHeader(), FlvTag::FLV_TAG_HEADER_LENGTH);
-		sum_write_bytes += write_bytes;
-
-		write_bytes = file_write->Write(tag->GetBody());
-		sum_write_bytes += write_bytes;
-	}
-
-	/**
-	 * 文件尾部为最后一个tag的大小
-	 */
-	uint32_t previous_tag_size = (flv_tags->at(flv_tags->size() - 1))->GetCurrentTagSize();
-	previous_tag_size = htonl(previous_tag_size);
-	file_write->Write((char*)&previous_tag_size, sizeof previous_tag_size);
-
-	LOG_INFO("connection: %s write %zu bytes to %s success",
-			connection_ptr_->GetConnectionName().c_str(),
-			sum_write_bytes,
-			file_write->GetPath().c_str());
-
-	return sum_write_bytes;
 }
 
 ssize_t RtmpServerConnection::ParseData(Buffer* buffer)
@@ -162,6 +121,20 @@ void RtmpServerConnection::OnConnectionShakeHand(const TcpConnectionPtr& connect
 	RtmpServerConnection::ShakeHandResult result = ShakeHand(buffer);
 	switch (result)
 	{
+		case RtmpServerConnection::SHAKE_AUTHENTICATE:
+		{
+			if (!Authenticate())
+			{
+				LOG_WARN("connection: %s authenticate failed",
+						connection_ptr->GetConnectionName().c_str());
+				connection_ptr->Shutdown();
+				/**
+				 * 校验出错时返回
+				 */
+				return;
+			}
+			return;
+		}
 		case RtmpServerConnection::SHAKE_SUCCESS:
 		{
 			LOG_INFO("connection: %s shake hand success",
@@ -240,6 +213,11 @@ std::string RtmpServerConnection::GetConnectionName() const
 	return connection_ptr_->GetConnectionName();
 }
 
+void RtmpServerConnection::SetAuthenticationCallback(const AuthenticationCallback& callback)
+{
+	authentication_callback_ = callback;
+}
+
 void RtmpServerConnection::SendHeaderToClientConnection(
 		const RtmpClientConnectionPtr& client_connection_ptr)
 {
@@ -275,4 +253,20 @@ void RtmpServerConnection::OnConnectionClose(const TcpConnectionPtr& connection_
 	client_connection_map_.erase(connection_ptr->GetConnectionName());
 	LOG_INFO("client: %s, remove from server: %s", connection_ptr->GetConnectionName().c_str(),
 			connection_ptr_->GetConnectionName().c_str());
+}
+
+bool RtmpServerConnection::Authenticate()
+{
+	std::string username = GetRtmpPath();
+	std::string password = rtmp_manager_.GetPasswordFromReleasePack();
+
+	if (authentication_callback_)
+	{
+		if (!authentication_callback_(username, password))
+		{
+			return false;
+		}
+	}
+
+	return true;
 }

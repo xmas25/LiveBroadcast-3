@@ -1,8 +1,6 @@
 ﻿// LiveBroadcastServer.cpp : Defines the entry point for the application.
 //
 #include <iostream>
-#include <unistd.h>
-#include <ctime>
 #include <csignal>
 
 #include "network/TcpServer.h"
@@ -11,23 +9,35 @@
 #include "network/protocol/RtmpServerConnection.h"
 #include "utils/Logger.h"
 #include "utils/Format.h"
-
+#include "mapper/UserMapper.h"
 
 #ifdef _WIN32
 NetworkInitializer init;
 #endif
 
 std::map<std::string, RtmpServerConnection*> rtmp_connection_map;
+UserMapper user_mapper_;
 
-/** 客户端名称对应的 RtmpServerConnection */
-std::map<std::string, RtmpServerConnection*> client_server_map;
+bool OnAuthenticate(const std::string& user, const std::string& passwd)
+{
+	if (user_mapper_.GetPasswdByUser(user) == passwd)
+	{
+		return true;
+	}
+	else
+	{
+		LOG_WARN("user: %s, use wrong passwd: %s", user.c_str(), passwd.c_str())
+		return false;
+	}
+
+}
 
 void OnShakeHandSuccess(RtmpServerConnection* server_connection)
 {
 	/**
 	 * 将推流的url和server_connection关联起来 用于拉流的时候根据url获取对应的server_connection
 	 *
-	 * rtmp链接到server_connection 映射关系可以自己修改
+	 * rtmp到server_connection 映射关系可以自己修改
 	 */
 	std::string path = server_connection->GetRtmpPath();
 	rtmp_connection_map[path] = server_connection;
@@ -35,12 +45,16 @@ void OnShakeHandSuccess(RtmpServerConnection* server_connection)
 			path.c_str());
 }
 
+/** 主播建立连接后的回调函数*/
 void OnConnection(const TcpConnectionPtr& connection_ptr)
 {
 	if (connection_ptr->Connected())
 	{
 		RtmpServerConnection* server_connection = new RtmpServerConnection(connection_ptr);
+
+		// 连接建立后RtmpServerConnection内部会进行握手 然后握手成功后调用函数
 		server_connection->SetShakeHandSuccessCallback(OnShakeHandSuccess);
+		server_connection->SetAuthenticationCallback(OnAuthenticate);
 
 		/**
 		 * 连接建立后 设置握手回调函数
@@ -70,7 +84,6 @@ void OnClientMessage(const TcpConnectionPtr& connection_ptr, Buffer* buffer, Tim
 	{
 		LOG_INFO("connection: %s, request url: %s success", connection_ptr->GetConnectionName().c_str(),
 				url.c_str());
-		client_server_map[connection_ptr->GetConnectionName()] = server_connection;
 		server_connection->AddClientConnection(
 				std::make_shared<RtmpClientConnection>(connection_ptr));
 	}
@@ -94,6 +107,13 @@ int main(int argc, char* argv[])
 		printf("wrong number of parameters\r\n");
 		exit(-1);
 	}
+
+	if (!user_mapper_.Initialize(
+			"127.0.0.1", "lsmg", "123456789", "live"))
+	{
+		exit(-1);
+	}
+
 
 	short main_server_port = atoi(argv[1]);
 	short client_server_port = atoi(argv[2]);

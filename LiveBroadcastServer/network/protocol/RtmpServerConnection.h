@@ -19,12 +19,14 @@ class RtmpServerConnection;
 typedef std::shared_ptr<RtmpClientConnection> RtmpClientConnectionPtr;
 typedef std::map<std::string, RtmpClientConnectionPtr> RtmpClientConnectionMap;
 typedef std::function<void(RtmpServerConnection*)> ShakeHandSuccessCallback;
+typedef std::function<bool(const std::string&, const std::string&)> AuthenticationCallback;
 
 class RtmpServerConnection
 {
 public:
 	enum ShakeHandResult
 	{
+		SHAKE_AUTHENTICATE,
 		SHAKE_SUCCESS,
 		SHAKE_FAILED,
 		SHAKE_DATA_NOT_ENOUGH
@@ -32,15 +34,12 @@ public:
 
 	explicit RtmpServerConnection(const TcpConnectionPtr& connection_ptr);
 
-	/**
-	 * 将当前Tag数据保存到文件中
-	 * @param file_write 与保存到的文件
-	 * @return 写入的字节数
-	 */
-	ssize_t WriteToFile(File* file_write);
-
 	ssize_t ParseData(Buffer* buffer);
 
+	/**
+	 * 获取Flv直播流的源数据包
+	 * @return
+	 */
 	const Buffer* GetHeaderDataBuffer();
 
 	/**
@@ -71,9 +70,15 @@ public:
 
 	std::string GetRtmpUrl() const;
 
+	/**
+	 * xxx/aaa -> aaa
+	 * @return
+	 */
 	std::string GetRtmpPath() const;
 
 	std::string GetConnectionName() const;
+
+	void SetAuthenticationCallback(const AuthenticationCallback& callback);
 private:
 
 	TcpConnectionPtr connection_ptr_;
@@ -86,12 +91,22 @@ private:
 
 	FlvTagPtr last_flv_tag_ptr_;
 
+	/**
+	 * Flv流源数据缓冲区
+	 */
 	Buffer header_buffer_;
 
 	ShakeHandSuccessCallback shake_hand_success_callback_;
 
+	AuthenticationCallback authentication_callback_;
+
 	void DebugParseSize(size_t division);
 
+	/**
+	 * 解析握手数据
+	 * @param buffer 主播端发送的握手数据
+	 * @return 当前的握手装备
+	 */
 	ShakeHandResult ShakeHand(Buffer* buffer);
 
 	/**
@@ -109,6 +124,8 @@ private:
 	uint32_t GetLastHeaderTagCurrentSize() const;
 
 	void OnConnectionClose(const TcpConnectionPtr& connection_ptr);
+
+	bool Authenticate();
 };
 
 

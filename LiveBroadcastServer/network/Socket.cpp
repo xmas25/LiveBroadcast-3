@@ -13,7 +13,7 @@ Socket::~Socket()
 {
 	if (sockfd_ > 0)
 	{
-		close(sockfd_);
+		socketops::Close(sockfd_);
 		sockfd_ = -1;
 	}
 }

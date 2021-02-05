@@ -4,6 +4,7 @@
 
 #include "Epoll.h"
 #include "network/Channel.h"
+#include "utils/Logger.h"
 
 Epoll::Epoll() :
 	epfd_(::epoll_create(5)),
@@ -22,6 +23,12 @@ bool Epoll::LoopOnce(int timeout, ChannelVector* active_channels)
 		{
 			return true;
 		}
+		else if (errno == EINTR)
+		{
+			return true;
+		}
+		LOG_ERROR("error signal: %d", errno);
+
 		return false;
 	}
 	else if (ret == 0)
