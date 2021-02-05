@@ -7,10 +7,16 @@
 #include "network/TcpConnection.h"
 #include "utils/Logger.h"
 
+void DefaultOnMessage(const TcpConnectionPtr& connection, Buffer* buffer, Timestamp timestamp)
+{
+	buffer->Reset();
+}
+
 TcpClient::TcpClient(EventLoop* loop, const InetAddress& server_addr, const std::string& client_name):
 	loop_(loop),
 	server_addr_(server_addr),
 	client_name_(client_name),
+	newmessage_callback_(DefaultOnMessage),
 	connector_(loop, server_addr),
 	connection_id_(0),
 	retry_(false),

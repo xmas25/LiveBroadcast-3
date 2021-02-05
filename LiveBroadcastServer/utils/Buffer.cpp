@@ -64,7 +64,11 @@ void Buffer::AdjustBuffer()
 {
 	size_t readable_length = ReadableLength();
 
-	memcpy(&buffer_[IDX_BEGIN], &buffer_[read_idx_], readable_length);
+	// memcpy(&buffer_[IDX_BEGIN], &buffer_[read_idx_], readable_length);
+	for (size_t i = 0; i < readable_length; ++i)
+	{
+		buffer_[IDX_BEGIN + i] = buffer_[read_idx_ + i];
+	}
 	read_idx_ = IDX_BEGIN;
 	write_idx_ = IDX_BEGIN + readable_length;
 }

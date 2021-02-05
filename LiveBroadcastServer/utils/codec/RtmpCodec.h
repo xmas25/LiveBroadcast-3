@@ -113,6 +113,12 @@ public:
 
 	Buffer* GetBuffer();
 
+	/**
+	 * 将解析后的header数据 逆向回原数据的16进制表示字符串
+	 * @return 44 0 0 f 0 3 4b 8
+	 */
+	std::string GetHeaderDebugMessage();
+
 private:
 
 	RtmpPackFmt fmt_;
