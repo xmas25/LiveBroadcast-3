@@ -27,9 +27,9 @@ std::string UserMapper::GetPasswdByUser(const std::string& username)
 			}
 
 		} while (result->NextRow());
-	}
 
-	LOG_WARN("cannot find user: %s", username.c_str());
+		LOG_WARN("cannot find user: %s", username.c_str());
+	}
 
 	return "";
 }

@@ -37,7 +37,7 @@ inline Field::DataType ConvertNativeType(enum_field_types type)
 }
 
 QueryResult::QueryResult(MYSQL_RES* res, uint32_t num_fields, uint64_t num_rows):
-	fields_(new Field[num_rows]),
+	fields_(new Field[num_fields]),
 	res_(res),
 	num_fields_(num_fields),
 	num_rows_(num_rows)
