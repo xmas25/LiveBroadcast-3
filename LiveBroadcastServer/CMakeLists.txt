@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8)
 
 project("LiveBroadcastServer")
 
-set(CMAKE_CXX_FLAGS "-Wall -Werror -std=c++17")
+set(CMAKE_CXX_FLAGS "-Wall -Werror -std=c++17 -g -o0")
 
 include_directories(${CMAKE_SOURCE_DIR})
 

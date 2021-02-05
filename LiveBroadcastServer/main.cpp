@@ -109,7 +109,7 @@ int main(int argc, char* argv[])
 	}
 
 	if (!user_mapper_.Initialize(
-			"192.168.80.160", "lsmg", "123456789", "live_test"))
+			"127.0.0.1", "lsmg", "123456789", "live"))
 	{
 		exit(-1);
 	}
