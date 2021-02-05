@@ -39,8 +39,28 @@ HTTP包装 RTMP解析 FLV解析 参考自网络相关文档
 
 # 使用说明
 
+**安装Mysql库**
+
+```shell
+yum install mysql-devel
+```
+
+**配置main.cpp文件**
+
+```c++
+// 修改数据库配置 main.cpp
+if (!user_mapper_.Initialize(
+			"127.0.0.1", "lsmg", "123456789", "live"))
+{
+    exit(-1);
+}
+
+// 可将main.cpp user_mapper_相关代码注释 修改OnAuthenticate函数 不使用Mysql配置
+```
+
 **编译执行文件**
 下载源代码后在Windows平台或者Linux平台编译
+
 ```shell
 git clone https://github.com/HiganFish/LiveBroadcast.git
 
@@ -312,3 +332,6 @@ Obs发送`Video Data`其中Data为sps_pps_tag的data部分  视频数据包
     ├── Timestamp.cpp
     └── Timestamp.h
 ```
+
+
+
