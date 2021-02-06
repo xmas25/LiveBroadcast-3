@@ -111,6 +111,14 @@ size_t File::GetFileSize()
 	return stat_.st_size;
 }
 
+void File::Flush()
+{
+	if (file_)
+	{
+		fflush(file_);
+	}
+};
+
 std::string File::OpenModeToString(OpenMode openmode)
 {
 	std::string mode;

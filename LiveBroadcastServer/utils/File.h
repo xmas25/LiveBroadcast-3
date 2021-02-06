@@ -55,6 +55,8 @@ public:
 
 	size_t GetFileSize();
 
+	void Flush();
+
 	const std::string& GetPath() const;
 private:
 	std::string path_;

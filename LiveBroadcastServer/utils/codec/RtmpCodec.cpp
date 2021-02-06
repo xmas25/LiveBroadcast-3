@@ -1,3 +1,4 @@
+#include <sstream>
 #include "utils/codec/RtmpCodec.h"
 #include "utils/codec/FlvCodec.h"
 
@@ -203,12 +204,39 @@ uint32_t RtmpPack::GetBodyCurrentSize() const
 
 void RtmpPack::AppendData(const char* data, size_t length)
 {
-	buffer_.ReSize(GetBodyDataSize());
-
 	buffer_.AppendData(data, length);
 }
 
 Buffer* RtmpPack::GetBuffer()
 {
 	return &buffer_;
+}
+
+std::string RtmpPack::GetHeaderDebugMessage()
+{
+	std::ostringstream ss;
+
+	uint8_t fmt = (static_cast<uint8_t>(fmt_) << 6) + csid_;
+	ss << std::hex << (int)fmt << " ";
+
+
+	switch (fmt_)
+	{
+		case FMT0:
+			ss << (int)timestamp_[0] << " " << (int)timestamp_[1] << " " << (int)timestamp_[2] << " ";
+			ss << (int)data_size_[0] << " " << (int)data_size_[1] << " " << (int)data_size_[2] << " ";
+			ss << static_cast<int>(pack_type_);
+			break;
+		case FMT1:
+			ss << (int)timestamp_[0] << " " << (int)timestamp_[1] << " " << (int)timestamp_[2] << " ";
+			ss << (int)data_size_[0] << " " << (int)data_size_[1] << " " << (int)data_size_[2] << " ";
+			ss << static_cast<int>(pack_type_);
+			break;
+		case FMT2:
+			ss << (int)timestamp_[0] << " " << (int)timestamp_[1] << " " << (int)timestamp_[2] << " ";
+			break;
+		case FMT3:
+			break;
+	}
+	return ss.str();
 }

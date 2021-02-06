@@ -1,6 +1,8 @@
 #include <cassert>
+#include <iostream>
 #include "utils/codec/RtmpManager.h"
 #include "utils/Format.h"
+#include "utils/Logger.h"
 
 RtmpManager::RtmpManager():
 		parsed_status_(RtmpManager::PARSE_FIRST_HEADER),
@@ -45,7 +47,7 @@ ssize_t RtmpManager::ParseData(Buffer* buffer)
 			}
 			else if (parsed < 0)
 			{
-				printf("ParseHeader error\n");
+				LOG_ERROR("ParseHeader error");
 			}
 		}
 
@@ -54,13 +56,15 @@ ssize_t RtmpManager::ParseData(Buffer* buffer)
 			parsed = ParseBody(buffer);
 			if (parsed > 0)
 			{
+				// DEBUG信息 LOG_INFO("%s", current_rtmp_pack_.GetHeaderDebugMessage().c_str());
+
 				FlvTagPtr tag_ptr = std::make_shared<FlvTag>();
 				rtmp_codec_.EncodeHeaderAndSwapBuffer(&current_rtmp_pack_, tag_ptr.get());
 				ProcessNewFlvTag(tag_ptr);
 			}
 			else if (parsed < 0)
 			{
-				printf("ParseBody error\n");
+				LOG_ERROR("ParseBody error");
 			}
 		}
 		else if (parsed_status_ == PARSE_FIRST_HEADER)
@@ -68,7 +72,7 @@ ssize_t RtmpManager::ParseData(Buffer* buffer)
 			parsed = ParseFirstHeader(buffer);
 			if (parsed < 0)
 			{
-				printf("ParseFirstHeader error\n");
+				LOG_ERROR("ParseFirstHeader error");
 			}
 		}
 

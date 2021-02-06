@@ -16,19 +16,20 @@ NetworkInitializer init;
 #endif
 
 std::map<std::string, RtmpServerConnection*> rtmp_connection_map;
-UserMapper user_mapper_;
+// UserMapper user_mapper_;
 
 bool OnAuthenticate(const std::string& user, const std::string& passwd)
 {
-	if (user_mapper_.GetPasswdByUser(user) == passwd)
-	{
-		return true;
-	}
-	else
-	{
-		LOG_WARN("user: %s, use wrong passwd: %s", user.c_str(), passwd.c_str())
-		return false;
-	}
+	return true;
+//	if (user_mapper_.GetPasswdByUser(user) == passwd)
+//	{
+//		return true;
+//	}
+//	else
+//	{
+//		LOG_WARN("user: %s, use wrong passwd: %s", user.c_str(), passwd.c_str())
+//		return false;
+//	}
 
 }
 
@@ -108,11 +109,11 @@ int main(int argc, char* argv[])
 		exit(-1);
 	}
 
-	if (!user_mapper_.Initialize(
-			"127.0.0.1", "lsmg", "123456789", "live"))
-	{
-		exit(-1);
-	}
+//	if (!user_mapper_.Initialize(
+//			"127.0.0.1", "lsmg", "123456789", "live"))
+//	{
+//		exit(-1);
+//	}
 
 
 	short main_server_port = atoi(argv[1]);
