@@ -51,12 +51,26 @@ set(MAPPER_SRCS
 		mapper/UserMapper.cpp
 )
 
+set(THREAD_SRCS
+		thread/Thread.cpp
+		thread/ThreadPool.cpp
+		thread/Mutex.cpp
+		thread/Condition.cpp
+		)
+
 set(ALL_SRCS
 		${NETWORK_SRCS}
 		${UTILS_SRCS}
 		${DB_MYSQL_SRC}
 		${MAPPER_SRCS}
+		${THREAD_SRCS}
 )
+
+set(ALL_SRCS_NO_DB
+		${NETWORK_SRCS}
+		${UTILS_SRCS}
+		${THREAD_SRCS}
+		)
 
 # 后续会修改为模块化 因为过早模块化 会导致每次修改代码后需要rebuild才能更新 故临时使用这种方式
 
@@ -65,14 +79,17 @@ add_executable(RtmpManagerTest utils/codec/test/RtmpManagerTest.cpp ${UTILS_SRCS
 add_executable(LiveBroadcastServer main.cpp ${ALL_SRCS})
 target_link_libraries(LiveBroadcastServer mysqlclient)
 
-add_executable(LiveBroadcastServerTest test/MainTest.cpp ${ALL_SRCS})
+add_executable(LiveBroadcastServerTest test/MainTest.cpp ${ALL_SRCS_NO_DB})
 target_link_libraries(LiveBroadcastServerTest mysqlclient)
 
-add_executable(LoggerTest utils/test/LoggerTest.cpp utils/Logger.h utils/Logger.cpp utils/PlatformBase.h utils/PlatformBase.cpp)
+add_executable(LoggerTest ${UTILS_SRCS})
 
-add_executable(TcpServerTest network/test/TcpServerTest.cpp ${NETWORK_SRCS} ${NETWORK_HEADERS} ${UTILS_SRCS} ${UTILS_HEADERS})
+add_executable(TcpServerTest network/test/TcpServerTest.cpp ${ALL_SRCS_NO_DB})
 
-add_executable(ConnectorTest network/test/ConnectorTest.cpp ${NETWORK_SRCS} ${NETWORK_HEADERS} ${UTILS_SRCS} ${UTILS_HEADERS})
+add_executable(ConnectorTest network/test/ConnectorTest.cpp ${ALL_SRCS_NO_DB})
+
+add_executable(ThreadTest thread/test/ThreadTest.cpp ${ALL_SRCS_NO_DB})
+target_link_libraries(ThreadTest pthread)
 
 if(WIN32)
 	target_link_libraries(LiveBroadcastServer ws2_32)
